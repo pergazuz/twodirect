@@ -2,6 +2,8 @@
 
 import { cn } from "@/lib/utils";
 
+const STORAGE_URL = "https://ncjszzjzluhbqavalnty.supabase.co/storage/v1/object/public/stores";
+
 export interface StoreOption {
   id: string;
   name: string;
@@ -10,12 +12,12 @@ export interface StoreOption {
 }
 
 export const storeOptions: StoreOption[] = [
-  { id: "7-eleven", name: "7-Eleven", name_th: "7-Eleven", image: "/stores/7eleven.jpg" },
-  { id: "makro", name: "Makro", name_th: "Makro", image: "/stores/makro.png" },
-  { id: "lotus", name: "Lotus's", name_th: "Lotus's", image: "/stores/lotus.png" },
-  { id: "cj", name: "CJ Express", name_th: "CJ Express", image: "/stores/cj.jpg" },
-  { id: "maxvalue", name: "MaxValu", name_th: "MaxValu", image: "/stores/maxvalue.png" },
-  { id: "tops", name: "Tops", name_th: "Tops", image: "/stores/tops.png" },
+  { id: "7-eleven", name: "7-Eleven", name_th: "7-Eleven", image: `${STORAGE_URL}/7eleven.jpg` },
+  { id: "makro", name: "Makro", name_th: "Makro", image: `${STORAGE_URL}/makro.jpg` },
+  { id: "lotus", name: "Lotus's", name_th: "Lotus's", image: `${STORAGE_URL}/lotus.jpg` },
+  { id: "cj", name: "CJ Express", name_th: "CJ Express", image: `${STORAGE_URL}/cj.jpg` },
+  { id: "maxvalue", name: "MaxValu", name_th: "MaxValu", image: `${STORAGE_URL}/maxvalue.jpg` },
+  { id: "tops", name: "Tops", name_th: "Tops", image: `${STORAGE_URL}/tops.jpg` },
 ];
 
 interface StoreSelectorProps {

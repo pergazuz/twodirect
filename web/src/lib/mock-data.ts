@@ -17,14 +17,14 @@ export interface BranchWithChain {
 const STORAGE_URL = "https://ncjszzjzluhbqavalnty.supabase.co/storage/v1/object/public/products";
 
 export const mockProducts: Product[] = [
-  { id: "1", name: "Coke Zero 500ml", name_th: "โค้ก ซีโร่ 500ml", category: "beverages", price: 25, image_url: `${STORAGE_URL}/coke-zero.jpg` },
-  { id: "2", name: "Lay's Original 75g", name_th: "เลย์ รสดั้งเดิม 75g", category: "snacks", price: 35, image_url: `${STORAGE_URL}/lays.jpg` },
-  { id: "3", name: "Mama Shrimp Tom Yum", name_th: "มาม่า รสต้มยำกุ้ง", category: "instant-food", price: 8, image_url: `${STORAGE_URL}/mama.jpg` },
-  { id: "4", name: "All Cafe Latte", name_th: "ออลคาเฟ่ ลาเต้", category: "beverages", price: 45, image_url: `${STORAGE_URL}/allcafe.jpg` },
-  { id: "5", name: "Chicken Rice", name_th: "ข้าวมันไก่", category: "ready-meals", price: 59, image_url: `${STORAGE_URL}/chicken-rice.jpg` },
-  { id: "6", name: "Onigiri Salmon", name_th: "โอนิกิริ แซลมอน", category: "ready-meals", price: 39, image_url: `${STORAGE_URL}/onigiri.jpg` },
-  { id: "7", name: "Meiji Milk 450ml", name_th: "เมจิ นมสด 450ml", category: "dairy", price: 32, image_url: `${STORAGE_URL}/meiji-milk.jpg` },
-  { id: "8", name: "Red Bull 250ml", name_th: "กระทิงแดง 250ml", category: "beverages", price: 15, image_url: `${STORAGE_URL}/redbull.jpg` },
+  { id: "1", name: "Coke Zero 500ml", name_th: "โค้ก ซีโร่ 500ml", category: "beverages", price: 25, image_url: `${STORAGE_URL}/coke-zero.jpg`, tags: ["โปรโมชั่น", "ซื้อ 1 แถม 1"] },
+  { id: "2", name: "Lay's Original 75g", name_th: "เลย์ รสดั้งเดิม 75g", category: "snacks", price: 35, image_url: `${STORAGE_URL}/lays.jpg`, tags: ["โปรโมชั่น", "flash sale"] },
+  { id: "3", name: "Mama Shrimp Tom Yum", name_th: "มาม่า รสต้มยำกุ้ง", category: "instant-food", price: 8, image_url: `${STORAGE_URL}/mama.jpg`, tags: ["โปรโมชั่น"] },
+  { id: "4", name: "All Cafe Latte", name_th: "ออลคาเฟ่ ลาเต้", category: "beverages", price: 45, image_url: `${STORAGE_URL}/allcafe.jpg`, tags: ["flash sale"] },
+  { id: "5", name: "Chicken Rice", name_th: "ข้าวมันไก่", category: "ready-meals", price: 59, image_url: `${STORAGE_URL}/chicken-rice.jpg`, tags: ["โปรโมชั่น"] },
+  { id: "6", name: "Onigiri Salmon", name_th: "โอนิกิริ แซลมอน", category: "ready-meals", price: 39, image_url: `${STORAGE_URL}/onigiri.jpg`, tags: ["ซื้อ 1 แถม 1"] },
+  { id: "7", name: "Meiji Milk 450ml", name_th: "เมจิ นมสด 450ml", category: "dairy", price: 32, image_url: `${STORAGE_URL}/meiji-milk.jpg`, tags: ["โปรโมชั่น", "flash sale"] },
+  { id: "8", name: "Red Bull 250ml", name_th: "กระทิงแดง 250ml", category: "beverages", price: 15, image_url: `${STORAGE_URL}/redbull.jpg`, tags: ["ซื้อ 1 แถม 1"] },
 ];
 
 export const mockBranches: BranchWithChain[] = [
@@ -68,7 +68,7 @@ export function searchMockProducts(
   query: string,
   userLat: number,
   userLng: number,
-  radiusKm: number = 5,
+  radiusKm: number = 20,
   storeChain?: string
 ): SearchResult[] {
   const queryLower = query.toLowerCase();
@@ -76,9 +76,11 @@ export function searchMockProducts(
 
   for (const product of mockProducts) {
     // If no query, include all products (for store browsing)
+    // Also match against tags for promotions
     const matchesQuery = !query ||
       product.name.toLowerCase().includes(queryLower) ||
-      product.name_th.includes(query);
+      product.name_th.includes(query) ||
+      product.tags?.some(tag => tag.toLowerCase().includes(queryLower));
 
     if (matchesQuery) {
       const inventory = mockInventory[product.id] || {};

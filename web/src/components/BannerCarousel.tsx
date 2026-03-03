@@ -74,7 +74,6 @@ export function BannerCarousel({
   // Reset to first slide when store changes
   useEffect(() => {
     setCurrentIndex(0);
-    setFailedImages({});
   }, [storeId]);
 
   const goToNext = useCallback(() => {
@@ -119,10 +118,6 @@ export function BannerCarousel({
     setIsPaused(false);
   };
 
-  const handleImageError = (id: string) => {
-    setFailedImages((prev) => ({ ...prev, [id]: true }));
-  };
-
   if (activeBanners.length === 0) return null;
 
   return (
@@ -148,7 +143,7 @@ export function BannerCarousel({
                   alt={banner.alt}
                   className="w-full h-full object-cover"
                   loading={index === 0 ? "eager" : "lazy"}
-                  onError={() => handleImageError(banner.id)}
+                  onError={() => setFailedImages((prev) => ({ ...prev, [banner.id]: true }))}
                 />
               )}
               {failedImages[banner.id] && (

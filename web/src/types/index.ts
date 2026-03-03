@@ -6,6 +6,7 @@ export interface Product {
   category: string;
   image_url?: string;
   price: number;
+  tags?: string[];
 }
 
 export interface Branch {
