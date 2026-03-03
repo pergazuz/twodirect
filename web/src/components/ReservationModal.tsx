@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Clock, MapPin, AlertTriangle, ShoppingBag, Check } from "lucide-react";
 import { Product, Branch } from "@/types";
+import { useReservations, Reservation } from "@/hooks/useReservations";
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -22,20 +23,39 @@ export function ReservationModal({
   pickupHours = 2,
 }: ReservationModalProps) {
   const [isConfirming, setIsConfirming] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [confirmedReservation, setConfirmedReservation] = useState<Reservation | null>(null);
+  const { addReservation } = useReservations();
 
   if (!isOpen) return null;
 
   const handleConfirm = async () => {
     setIsConfirming(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    // Simulate API delay
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Save reservation
+    const reservation = addReservation({
+      productId: product.id,
+      productName: product.name,
+      productNameTh: product.name_th,
+      productPrice: product.price,
+      productImage: product.image_url,
+      branchId: branch.id,
+      branchName: branch.name,
+      branchNameTh: branch.name_th,
+      branchAddress: branch.address_th,
+      branchLat: branch.latitude,
+      branchLng: branch.longitude,
+      quantity: 1,
+      pickupHours,
+    });
+
     setIsConfirming(false);
-    setIsConfirmed(true);
+    setConfirmedReservation(reservation);
   };
 
   const handleClose = () => {
-    setIsConfirmed(false);
+    setConfirmedReservation(null);
     onClose();
   };
 
@@ -52,7 +72,7 @@ export function ReservationModal({
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">
-            {isConfirmed ? "จองสำเร็จ" : "จองสินค้า"}
+            {confirmedReservation ? "จองสำเร็จ" : "จองสินค้า"}
           </h2>
           <button
             onClick={handleClose}
@@ -62,7 +82,7 @@ export function ReservationModal({
           </button>
         </div>
 
-        {isConfirmed ? (
+        {confirmedReservation ? (
           /* Success State */
           <div className="p-6 text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -80,15 +100,23 @@ export function ReservationModal({
                 <span className="font-medium">สาขา:</span> {branch.name_th}
               </p>
               <p className="text-sm text-gray-600 mt-1">
-                <span className="font-medium">รหัสจอง:</span> TD{Date.now().toString().slice(-8)}
+                <span className="font-medium">รหัสจอง:</span> {confirmedReservation.code}
               </p>
             </div>
-            <button
-              onClick={handleClose}
-              className="w-full py-3 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors"
-            >
-              เสร็จสิ้น
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleClose}
+                className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                ปิด
+              </button>
+              <a
+                href="/reservations"
+                className="flex-1 py-3 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors text-center"
+              >
+                ดูรายการจอง
+              </a>
+            </div>
           </div>
         ) : (
           /* Reservation Form */

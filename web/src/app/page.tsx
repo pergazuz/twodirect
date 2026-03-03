@@ -1,13 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { SearchBar, StoreSelector, BannerCarousel } from "@/components";
-import { MapPin, Loader2, Navigation, Percent, Gift, Clock } from "lucide-react";
+import { SearchBar, StoreSelector, BannerCarousel, PendingReservationBanner } from "@/components";
+import { MapPin, Loader2, Navigation, Percent, Gift, Clock, ShoppingBag } from "lucide-react";
 import { useGeolocation } from "@/hooks/useGeolocation";
+import { useReservations } from "@/hooks/useReservations";
 
 export default function Home() {
   const router = useRouter();
   const { location, loading, error, permissionDenied, requestLocation, isDefault } = useGeolocation();
+  const { pendingCount } = useReservations();
 
   const handleSearch = (query: string) => {
     router.push(`/search?q=${encodeURIComponent(query)}&lat=${location.lat}&lng=${location.lng}`);
@@ -46,21 +49,37 @@ export default function Home() {
               <h1 className="text-xl font-semibold text-white sm:text-2xl">TwoDirect</h1>
               <p className="text-sm text-gray-400 mt-0.5">ค้นหาสินค้า ตรงไปหยิบ</p>
             </div>
-            <button
-              onClick={handleLocationClick}
-              className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-sm text-white transition-colors hover:bg-white/20 active:bg-white/15 min-h-[40px]"
-              title={error || `ตำแหน่ง: ${location.name}`}
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
-              ) : isDefault || permissionDenied ? (
-                <Navigation className="h-4 w-4" strokeWidth={1.5} />
-              ) : (
-                <MapPin className="h-4 w-4" strokeWidth={1.5} />
-              )}
-              <span className="hidden xs:inline">{getDisplayName()}</span>
-              <span className="xs:hidden">{getShortName()}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Reservations Link */}
+              <Link
+                href="/reservations"
+                className="relative flex items-center justify-center rounded-full bg-white/10 p-2.5 text-white transition-colors hover:bg-white/20 active:bg-white/15 min-h-[40px] min-w-[40px]"
+                title="รายการจองของฉัน"
+              >
+                <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
+                {pendingCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    {pendingCount > 9 ? "9+" : pendingCount}
+                  </span>
+                )}
+              </Link>
+              {/* Location Button */}
+              <button
+                onClick={handleLocationClick}
+                className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-sm text-white transition-colors hover:bg-white/20 active:bg-white/15 min-h-[40px]"
+                title={error || `ตำแหน่ง: ${location.name}`}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+                ) : isDefault || permissionDenied ? (
+                  <Navigation className="h-4 w-4" strokeWidth={1.5} />
+                ) : (
+                  <MapPin className="h-4 w-4" strokeWidth={1.5} />
+                )}
+                <span className="hidden xs:inline">{getDisplayName()}</span>
+                <span className="xs:hidden">{getShortName()}</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -76,6 +95,11 @@ export default function Home() {
       {/* Banner Carousel */}
       <section className="mx-auto mt-6 max-w-lg px-4 sm:mt-8 md:max-w-2xl lg:max-w-4xl">
         <BannerCarousel />
+      </section>
+
+      {/* Pending Reservation Banner */}
+      <section className="mx-auto mt-6 max-w-lg px-4 sm:mt-8 md:max-w-2xl lg:max-w-4xl">
+        <PendingReservationBanner />
       </section>
 
       {/* Store Selector */}
