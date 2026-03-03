@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { SearchBar, StoreSelector, BannerCarousel } from "@/components";
-import { MapPin, Loader2, Navigation, Tag } from "lucide-react";
+import { MapPin, Loader2, Navigation, Percent, Gift, Clock } from "lucide-react";
 import { useGeolocation } from "@/hooks/useGeolocation";
 
 export default function Home() {
@@ -86,17 +86,53 @@ export default function Home() {
         <StoreSelector onStoreClick={handleStoreClick} className="px-0" />
       </section>
 
-      {/* Promo Banner */}
+      {/* Promotions */}
       <section className="mx-auto mt-6 max-w-lg px-4 sm:mt-8 md:max-w-2xl lg:max-w-4xl">
-        <div className="rounded-2xl bg-white p-5 sm:p-6 border border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-gray-900 p-2.5">
-              <Tag className="h-5 w-5 text-white" strokeWidth={1.5} />
+        <h2 className="mb-3 text-sm font-medium text-gray-500 uppercase tracking-wide sm:mb-4">
+          โปรโมชั่น
+        </h2>
+        <div className="space-y-3">
+          {/* Main Promo Card */}
+          <button
+            onClick={() => handleSearch("โปรโมชั่น")}
+            className="w-full rounded-2xl bg-white border border-gray-100 p-4 sm:p-5 text-left transition-all hover:bg-gray-50 active:scale-[0.99]"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-gray-900 text-white text-xs font-medium px-2.5 py-1 rounded-full">
+                    ดีลพิเศษ
+                  </span>
+                </div>
+                <p className="text-gray-900 font-semibold text-lg sm:text-xl">ลด 10% ทุกออเดอร์</p>
+                <p className="text-gray-400 text-sm mt-1">สำหรับผู้ใช้ TwoDirect เท่านั้น</p>
+              </div>
+              <div className="flex-shrink-0 ml-4">
+                <div className="bg-gray-100 rounded-2xl p-3 sm:p-4">
+                  <Percent className="h-7 w-7 sm:h-8 sm:w-8 text-gray-600" strokeWidth={1.5} />
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="font-medium text-gray-900 text-sm sm:text-base">ส่วนลด 10% สำหรับผู้ใช้ TwoDirect</p>
-              <p className="text-sm text-gray-500 mt-0.5">ค้นหาและไปรับสินค้าผ่านแอป</p>
-            </div>
+          </button>
+
+          {/* Secondary Promos */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => handleSearch("ซื้อ 1 แถม 1")}
+              className="rounded-xl bg-white border border-gray-100 p-4 text-left transition-all hover:bg-gray-50 active:scale-[0.98]"
+            >
+              <Gift className="h-5 w-5 text-gray-500 mb-2" strokeWidth={1.5} />
+              <p className="font-medium text-gray-900 text-sm">ซื้อ 1 แถม 1</p>
+              <p className="text-xs text-gray-400 mt-0.5">สินค้าที่ร่วมรายการ</p>
+            </button>
+            <button
+              onClick={() => handleSearch("flash sale")}
+              className="rounded-xl bg-white border border-gray-100 p-4 text-left transition-all hover:bg-gray-50 active:scale-[0.98]"
+            >
+              <Clock className="h-5 w-5 text-gray-500 mb-2" strokeWidth={1.5} />
+              <p className="font-medium text-gray-900 text-sm">Flash Sale</p>
+              <p className="text-xs text-gray-400 mt-0.5">เหลือเวลาอีก 2 ชม.</p>
+            </button>
           </div>
         </div>
       </section>

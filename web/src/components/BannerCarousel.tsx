@@ -6,14 +6,14 @@ import { cn } from "@/lib/utils";
 
 const STORAGE_URL = "https://ncjszzjzluhbqavalnty.supabase.co/storage/v1/object/public/banners";
 
-// Default banner images for home page
+// Default banner images for home page (from Supabase Storage)
 const DEFAULT_BANNERS = [
   { id: "1", url: `${STORAGE_URL}/banner1.jpg`, alt: "โปรโมชั่นพิเศษ" },
   { id: "2", url: `${STORAGE_URL}/banner2.jpg`, alt: "ส่วนลดสุดคุ้ม" },
   { id: "3", url: `${STORAGE_URL}/banner3.jpg`, alt: "สินค้าใหม่" },
 ];
 
-// Store-specific banners
+// Store-specific banners (from Supabase Storage)
 const STORE_BANNERS: Record<string, { id: string; url: string; alt: string }[]> = {
   "7-eleven": [
     { id: "7e-1", url: `${STORAGE_URL}/7eleven-banner1.jpg`, alt: "7-Eleven โปรโมชั่น" },
@@ -67,14 +67,14 @@ export function BannerCarousel({
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [isLoaded, setIsLoaded] = useState<Record<string, boolean>>({});
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
 
   // Reset to first slide when store changes
   useEffect(() => {
     setCurrentIndex(0);
-    setIsLoaded({});
+    setFailedImages({});
   }, [storeId]);
 
   const goToNext = useCallback(() => {
@@ -119,8 +119,8 @@ export function BannerCarousel({
     setIsPaused(false);
   };
 
-  const handleImageLoad = (id: string) => {
-    setIsLoaded((prev) => ({ ...prev, [id]: true }));
+  const handleImageError = (id: string) => {
+    setFailedImages((prev) => ({ ...prev, [id]: true }));
   };
 
   if (activeBanners.length === 0) return null;
@@ -139,29 +139,23 @@ export function BannerCarousel({
         className="flex transition-transform duration-500 ease-out"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
-        {activeBanners.map((banner) => (
+        {activeBanners.map((banner, index) => (
           <div key={banner.id} className="w-full flex-shrink-0 relative">
-            <div className="relative h-[150px] sm:h-[180px] md:h-[200px] bg-gray-100">
-              {/* Loading skeleton */}
-              {!isLoaded[banner.id] && (
-                <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
+            <div className="relative h-[150px] sm:h-[180px] md:h-[200px] bg-gradient-to-r from-gray-200 to-gray-300">
+              {!failedImages[banner.id] && (
+                <img
+                  src={banner.url}
+                  alt={banner.alt}
+                  className="w-full h-full object-cover"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  onError={() => handleImageError(banner.id)}
+                />
               )}
-              <img
-                src={banner.url}
-                alt={banner.alt}
-                className={cn(
-                  "w-full h-full object-cover transition-opacity duration-300",
-                  isLoaded[banner.id] ? "opacity-100" : "opacity-0"
-                )}
-                onLoad={() => handleImageLoad(banner.id)}
-                onError={(e) => {
-                  // Show fallback gradient if image fails
-                  e.currentTarget.src = "";
-                  e.currentTarget.parentElement!.classList.add(
-                    "bg-gradient-to-r", "from-emerald-500", "to-teal-600"
-                  );
-                }}
-              />
+              {failedImages[banner.id] && (
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500 to-teal-600 flex items-center justify-center">
+                  <span className="text-white font-medium">{banner.alt}</span>
+                </div>
+              )}
             </div>
           </div>
         ))}

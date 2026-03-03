@@ -6,8 +6,38 @@ import { SearchBar, ProductCard, BranchCard, MapView, getStoreName, BannerCarous
 import { SearchResult } from "@/types";
 import { searchProducts } from "@/lib/api";
 import { searchMockProducts, mockProducts } from "@/lib/mock-data";
-import { ArrowLeft, Map, List, Loader2, Search, Package, AlertCircle, X, Store } from "lucide-react";
+import { ArrowLeft, Map, List, Loader2, Search, Package, AlertCircle, X, Store, ShoppingCart, ExternalLink } from "lucide-react";
 import Link from "next/link";
+
+// Store online shopping URLs
+const STORE_ONLINE_URLS: Record<string, { name: string; getUrl: (query: string) => string }> = {
+  "7-eleven": {
+    name: "All Online 7-Eleven",
+    getUrl: (q) => `https://www.allonline.7eleven.co.th/search/?q=${encodeURIComponent(q)}&qc=&ms=true`,
+  },
+  "makro": {
+    name: "Makro Online",
+    getUrl: (q) => `https://www.makro.pro/c/search?q=${encodeURIComponent(q)}`,
+  },
+  "lotus": {
+    name: "Lotus's Online",
+    getUrl: (q) => `https://www.lotuss.com/th/search/${encodeURIComponent(q)}?sort=relevance:DESC`,
+  },
+  "tops": {
+    name: "Tops Online",
+    getUrl: (q) => `https://www.tops.co.th/th/search/${encodeURIComponent(q)}`,
+  },
+};
+
+function getOnlineStoreUrl(storeId: string, productName: string): string | null {
+  const store = STORE_ONLINE_URLS[storeId];
+  if (!store) return null;
+  return store.getUrl(productName);
+}
+
+function getOnlineStoreName(storeId: string): string {
+  return STORE_ONLINE_URLS[storeId]?.name || "Online Store";
+}
 
 // Set to true to use Rust backend, false for mock data
 const USE_BACKEND = true;
@@ -52,7 +82,7 @@ function SearchContent() {
 
       if (USE_BACKEND && effectiveQuery) {
         // Use Rust backend API → Supabase
-        searchProducts(effectiveQuery, lat, lng, 10, storeParam || undefined)
+        searchProducts(effectiveQuery, lat, lng, 50, storeParam || undefined)
           .then((data) => {
             // Filter by store if specified
             let filteredData = data;
@@ -70,7 +100,7 @@ function SearchContent() {
           .catch((err) => {
             console.error("API Error, falling back to mock data:", err);
             // Fallback to mock data if backend is not running
-            const mockResults = searchMockProducts(effectiveQuery, lat, lng, 10, storeParam || undefined);
+            const mockResults = searchMockProducts(effectiveQuery, lat, lng, 50, storeParam || undefined);
             setResults(mockResults);
             setError("Backend ไม่พร้อมใช้งาน - ใช้ข้อมูลจำลอง");
             setLoading(false);
@@ -85,11 +115,9 @@ function SearchContent() {
             product,
             branches: [] // No branch data for category browse
           }));
-        } else if (storeParam && !searchQuery) {
-          // Show all products from the selected store
-          mockResults = searchMockProducts("", lat, lng, 50, storeParam);
         } else {
-          mockResults = searchMockProducts(effectiveQuery, lat, lng, 10, storeParam || undefined);
+          // Use larger radius (50km) to ensure results are found
+          mockResults = searchMockProducts(effectiveQuery, lat, lng, 50, storeParam || undefined);
         }
         setResults(mockResults);
         setLoading(false);
@@ -242,6 +270,44 @@ function SearchContent() {
                 </div>
               </div>
             </div>
+            {/* Online Shopping Option */}
+            {storeParam && STORE_ONLINE_URLS[storeParam] && (
+              <a
+                href={getOnlineStoreUrl(storeParam, selectedProduct.product.name_th) || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 rounded-2xl bg-white border border-gray-100 p-4 sm:p-5 transition-all hover:bg-gray-50 active:scale-[0.99]"
+              >
+                <div className="flex-shrink-0 bg-gray-900 rounded-xl p-3">
+                  <ShoppingCart className="h-6 w-6 text-white" strokeWidth={1.5} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 text-sm sm:text-base">สั่งซื้อออนไลน์</p>
+                  <p className="text-xs sm:text-sm text-gray-400 mt-0.5">{getOnlineStoreName(storeParam)}</p>
+                </div>
+                <ExternalLink className="h-5 w-5 text-gray-300 flex-shrink-0" strokeWidth={1.5} />
+              </a>
+            )}
+
+            {/* If no store selected, show general online option */}
+            {!storeParam && (
+              <a
+                href={`https://www.allonline.7eleven.co.th/search/?q=${encodeURIComponent(selectedProduct.product.name_th)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-4 rounded-2xl bg-white border border-gray-100 p-4 sm:p-5 transition-all hover:bg-gray-50 active:scale-[0.99]"
+              >
+                <div className="flex-shrink-0 bg-gray-900 rounded-xl p-3">
+                  <ShoppingCart className="h-6 w-6 text-white" strokeWidth={1.5} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 text-sm sm:text-base">สั่งซื้อออนไลน์</p>
+                  <p className="text-xs sm:text-sm text-gray-400 mt-0.5">ดูราคาและสั่งซื้อทางออนไลน์</p>
+                </div>
+                <ExternalLink className="h-5 w-5 text-gray-300 flex-shrink-0" strokeWidth={1.5} />
+              </a>
+            )}
+
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-gray-900 text-sm sm:text-base">
                 สาขาที่มีสินค้า
@@ -250,7 +316,11 @@ function SearchContent() {
             </div>
             <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
               {selectedProduct.branches.map((b) => (
-                <BranchCard key={b.branch.id} branchWithStock={b} />
+                <BranchCard
+                  key={b.branch.id}
+                  branchWithStock={b}
+                  product={selectedProduct.product}
+                />
               ))}
             </div>
           </div>

@@ -7,4 +7,5 @@ export { CategoryButton, categories } from "./CategoryButton";
 export { StoreSelector, storeOptions, getStoreName } from "./StoreSelector";
 export type { StoreOption } from "./StoreSelector";
 export { BannerCarousel, getBannersForStore } from "./BannerCarousel";
+export { ReservationModal } from "./ReservationModal";
 
