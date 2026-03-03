@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { BranchWithStock, Product } from "@/types";
 import { formatDistance } from "@/lib/utils";
 import { MapPin, Clock, Navigation, ShoppingBag } from "lucide-react";
 import { PromoBadge } from "./PromoBadge";
 import { ReservationModal } from "./ReservationModal";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface BranchCardProps {
   branchWithStock: BranchWithStock;
@@ -17,6 +19,8 @@ interface BranchCardProps {
 export function BranchCard({ branchWithStock, product, onNavigate, onReserve }: BranchCardProps) {
   const { branch, quantity, distance_km, promotions } = branchWithStock;
   const [showReservationModal, setShowReservationModal] = useState(false);
+  const { user } = useAuth();
+  const router = useRouter();
 
   const handleNavigate = () => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${branch.latitude},${branch.longitude}`;
@@ -25,6 +29,11 @@ export function BranchCard({ branchWithStock, product, onNavigate, onReserve }: 
   };
 
   const handleReserve = () => {
+    if (!user) {
+      // Redirect to login if not logged in
+      router.push("/login");
+      return;
+    }
     setShowReservationModal(true);
     onReserve?.(branchWithStock);
   };

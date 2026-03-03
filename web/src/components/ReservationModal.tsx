@@ -30,28 +30,32 @@ export function ReservationModal({
 
   const handleConfirm = async () => {
     setIsConfirming(true);
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    // Save reservation
-    const reservation = addReservation({
-      productId: product.id,
-      productName: product.name,
-      productNameTh: product.name_th,
-      productPrice: product.price,
-      productImage: product.image_url,
-      branchId: branch.id,
-      branchName: branch.name,
-      branchNameTh: branch.name_th,
-      branchAddress: branch.address_th,
-      branchLat: branch.latitude,
-      branchLng: branch.longitude,
-      quantity: 1,
-      pickupHours,
-    });
+    try {
+      // Save reservation (works for both logged-in and guest users)
+      const reservation = await addReservation({
+        productId: product.id,
+        productName: product.name,
+        productNameTh: product.name_th,
+        productPrice: product.price,
+        productImage: product.image_url,
+        branchId: branch.id,
+        branchName: branch.name,
+        branchNameTh: branch.name_th,
+        branchAddress: branch.address_th,
+        branchLat: branch.latitude,
+        branchLng: branch.longitude,
+        quantity: 1,
+        pickupHours,
+      });
 
-    setIsConfirming(false);
-    setConfirmedReservation(reservation);
+      setConfirmedReservation(reservation);
+    } catch (error) {
+      console.error("Error creating reservation:", error);
+      alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsConfirming(false);
+    }
   };
 
   const handleClose = () => {

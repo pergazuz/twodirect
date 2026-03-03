@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_Thai } from "next/font/google";
 import "./globals.css";
+import { Providers } from "./providers";
 
 const notoSansThai = Noto_Sans_Thai({
   variable: "--font-noto-thai",
@@ -29,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="th">
       <body className={`${notoSansThai.variable} font-sans antialiased`}>
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

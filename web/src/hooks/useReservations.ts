@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 export type ReservationStatus = "pending" | "completed" | "expired" | "cancelled";
 
@@ -16,9 +18,10 @@ export interface Reservation {
   branchName: string;
   branchNameTh: string;
   branchAddress: string;
-  branchLat: number;
-  branchLng: number;
-  quantity: number;
+  branchChain?: string;
+  branchLat?: number;
+  branchLng?: number;
+  quantity?: number;
   status: ReservationStatus;
   createdAt: string;
   pickupDeadline: string;
@@ -34,44 +37,112 @@ function generateReservationCode(): string {
   return `TD${timestamp}${random}`;
 }
 
+// Convert DB record to Reservation
+function dbToReservation(record: any): Reservation {
+  return {
+    id: record.id,
+    code: record.reservation_code,
+    productId: record.product_id,
+    productName: record.product_name,
+    productNameTh: record.product_name_th,
+    productPrice: record.product_price,
+    productImage: record.product_image_url,
+    branchId: record.branch_id,
+    branchName: record.branch_name,
+    branchNameTh: record.branch_name_th,
+    branchAddress: record.branch_address_th,
+    branchChain: record.branch_chain,
+    status: record.status,
+    createdAt: record.created_at,
+    pickupDeadline: record.pickup_deadline,
+  };
+}
+
 export function useReservations() {
+  const { user, isLoading: authLoading } = useAuth();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load reservations from localStorage
+  // Load reservations from Supabase (if logged in) or localStorage
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored) as Reservation[];
-          // Update expired reservations
-          const updated = parsed.map((r) => {
-            if (r.status === "pending" && new Date(r.pickupDeadline) < new Date()) {
-              return { ...r, status: "expired" as ReservationStatus };
+    // Wait for auth to finish loading before deciding where to load from
+    if (authLoading) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadReservations = async () => {
+      try {
+        if (user) {
+          // Load from Supabase
+          const { data, error } = await supabase
+            .from("reservations")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false });
+
+          if (error) throw error;
+
+          if (!isCancelled && data) {
+            // Update expired reservations in DB
+            const now = new Date();
+            const updated = data.map(dbToReservation).map((r) => {
+              if (r.status === "pending" && new Date(r.pickupDeadline) < now) {
+                // Update in DB
+                supabase.from("reservations").update({ status: "expired" }).eq("id", r.id);
+                return { ...r, status: "expired" as ReservationStatus };
+              }
+              return r;
+            });
+            setReservations(updated);
+          }
+        } else if (typeof window !== "undefined") {
+          // Not logged in - load from localStorage
+          const stored = localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            try {
+              const parsed = JSON.parse(stored) as Reservation[];
+              const updated = parsed.map((r) => {
+                if (r.status === "pending" && new Date(r.pickupDeadline) < new Date()) {
+                  return { ...r, status: "expired" as ReservationStatus };
+                }
+                return r;
+              });
+              if (!isCancelled) {
+                setReservations(updated);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+              }
+            } catch {
+              if (!isCancelled) setReservations([]);
             }
-            return r;
-          });
-          setReservations(updated);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        } catch {
-          setReservations([]);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading reservations:", error);
+      } finally {
+        if (!isCancelled) {
+          setIsLoaded(true);
         }
       }
-      setIsLoaded(true);
-    }
-  }, []);
+    };
 
-  // Save to localStorage whenever reservations change
-  const saveReservations = useCallback((newReservations: Reservation[]) => {
-    setReservations(newReservations);
+    loadReservations();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [user, authLoading]);
+
+  // Save to localStorage (for non-logged-in users)
+  const saveToLocalStorage = useCallback((newReservations: Reservation[]) => {
     if (typeof window !== "undefined") {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newReservations));
     }
   }, []);
 
   const addReservation = useCallback(
-    (data: {
+    async (data: {
       productId: string;
       productName: string;
       productNameTh: string;
@@ -81,31 +152,62 @@ export function useReservations() {
       branchName: string;
       branchNameTh: string;
       branchAddress: string;
-      branchLat: number;
-      branchLng: number;
-      quantity: number;
+      branchChain?: string;
+      branchLat?: number;
+      branchLng?: number;
+      quantity?: number;
       pickupHours: number;
-    }): Reservation => {
+    }): Promise<Reservation> => {
+      // Require login to make reservations
+      if (!user) {
+        throw new Error("กรุณาเข้าสู่ระบบก่อนทำการจอง");
+      }
+
       const now = new Date();
       const deadline = new Date(now.getTime() + data.pickupHours * 60 * 60 * 1000);
+      const code = generateReservationCode();
 
-      const reservation: Reservation = {
-        id: `res_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-        code: generateReservationCode(),
-        ...data,
-        status: "pending",
-        createdAt: now.toISOString(),
-        pickupDeadline: deadline.toISOString(),
-      };
+      // Save to Supabase
+      const { data: record, error } = await supabase
+        .from("reservations")
+        .insert({
+          user_id: user.id,
+            product_id: data.productId,
+            product_name: data.productName,
+            product_name_th: data.productNameTh,
+            product_price: data.productPrice,
+            product_image_url: data.productImage,
+            branch_id: data.branchId,
+            branch_name: data.branchName,
+            branch_name_th: data.branchNameTh,
+            branch_address_th: data.branchAddress,
+            branch_chain: data.branchChain,
+            status: "pending",
+            reservation_code: code,
+            pickup_deadline: deadline.toISOString(),
+          })
+          .select()
+          .single();
 
-      saveReservations([reservation, ...reservations]);
+      if (error) throw error;
+
+      const reservation = dbToReservation(record);
+      setReservations([reservation, ...reservations]);
       return reservation;
     },
-    [reservations, saveReservations]
+    [user, reservations]
   );
 
   const updateStatus = useCallback(
-    (id: string, status: ReservationStatus) => {
+    async (id: string, status: ReservationStatus) => {
+      if (user) {
+        // Update in Supabase
+        await supabase
+          .from("reservations")
+          .update({ status, updated_at: new Date().toISOString() })
+          .eq("id", id);
+      }
+
       const updated = reservations.map((r) => {
         if (r.id === id) {
           return {
@@ -117,9 +219,10 @@ export function useReservations() {
         }
         return r;
       });
-      saveReservations(updated);
+      setReservations(updated);
+      if (!user) saveToLocalStorage(updated);
     },
-    [reservations, saveReservations]
+    [user, reservations, saveToLocalStorage]
   );
 
   const cancelReservation = useCallback(

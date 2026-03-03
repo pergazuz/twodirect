@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SearchBar, StoreSelector, BannerCarousel, PendingReservationBanner } from "@/components";
-import { MapPin, Loader2, Navigation, Percent, Gift, Clock, ShoppingBag } from "lucide-react";
+import { MapPin, Loader2, Navigation, Percent, Gift, Clock, ShoppingBag, User, LogIn } from "lucide-react";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { useReservations } from "@/hooks/useReservations";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Home() {
   const router = useRouter();
   const { location, loading, error, permissionDenied, requestLocation, isDefault } = useGeolocation();
   const { pendingCount } = useReservations();
+  const { user, profile, isLoading: authLoading } = useAuth();
 
   const handleSearch = (query: string) => {
     router.push(`/search?q=${encodeURIComponent(query)}&lat=${location.lat}&lng=${location.lng}`);
@@ -46,10 +48,44 @@ export default function Home() {
         <div className="mx-auto max-w-lg md:max-w-2xl lg:max-w-4xl">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl font-semibold text-white sm:text-2xl">TwoDirect</h1>
-              <p className="text-sm text-gray-400 mt-0.5">ค้นหาสินค้า ตรงไปหยิบ</p>
+              <img
+                src="/logo_twodirect.png"
+                alt="TwoDirect - ค้นหาสินค้า ตรงไปหยิบ"
+                className="h-8 sm:h-10 w-auto"
+              />
             </div>
             <div className="flex items-center gap-2">
+              {/* Auth Button */}
+              {authLoading ? (
+                <div className="flex items-center justify-center rounded-full bg-white/10 p-2.5 min-h-[40px] min-w-[40px]">
+                  <Loader2 className="h-5 w-5 text-white animate-spin" strokeWidth={1.5} />
+                </div>
+              ) : user ? (
+                <Link
+                  href="/profile"
+                  className="flex items-center justify-center rounded-full bg-white/10 overflow-hidden transition-colors hover:bg-white/20 active:bg-white/15 min-h-[40px] min-w-[40px]"
+                  title="โปรไฟล์"
+                >
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile.full_name || "Profile"}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-5 w-5 text-white" strokeWidth={1.5} />
+                  )}
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-2 text-sm text-white transition-colors hover:bg-white/20 active:bg-white/15 min-h-[40px]"
+                  title="เข้าสู่ระบบ"
+                >
+                  <LogIn className="h-4 w-4" strokeWidth={1.5} />
+                  <span className="hidden sm:inline">เข้าสู่ระบบ</span>
+                </Link>
+              )}
               {/* Reservations Link */}
               <Link
                 href="/reservations"
