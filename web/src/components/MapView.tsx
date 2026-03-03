@@ -37,6 +37,14 @@ export function MapView({ branches, userLocation, onBranchClick, className }: Ma
     setIsClient(true);
   }, []);
 
+  // Deduplicate branches by branch ID (same branch can appear for multiple products)
+  const uniqueBranches = branches.reduce((acc, b) => {
+    if (!acc.find((existing) => existing.branch.id === b.branch.id)) {
+      acc.push(b);
+    }
+    return acc;
+  }, [] as BranchWithStock[]);
+
   if (!isClient) {
     return (
       <div className={`flex items-center justify-center bg-gray-50 min-h-[250px] sm:min-h-[300px] md:min-h-[400px] rounded-2xl ${className || ""}`}>
@@ -68,7 +76,7 @@ export function MapView({ branches, userLocation, onBranchClick, className }: Ma
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {branches.map((b) => (
+        {uniqueBranches.map((b) => (
           <Marker
             key={b.branch.id}
             position={[b.branch.latitude, b.branch.longitude]}

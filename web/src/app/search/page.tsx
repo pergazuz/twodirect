@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
-import { SearchBar, ProductCard, BranchCard } from "@/components";
+import { SearchBar, ProductCard, BranchCard, MapView } from "@/components";
 import { SearchResult } from "@/types";
 import { searchProducts } from "@/lib/api";
 import { searchMockProducts, mockProducts } from "@/lib/mock-data";
@@ -137,17 +137,25 @@ function SearchContent() {
             <div className="flex gap-1 rounded-xl bg-gray-100 p-1 flex-shrink-0">
               <button
                 onClick={() => setViewMode("list")}
-                className={`rounded-lg p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center transition-all ${viewMode === "list" ? "bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                className={`rounded-lg p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center transition-all ${
+                  viewMode === "list"
+                    ? "bg-white shadow-sm text-gray-900"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
                 aria-label="List view"
               >
-                <List className="h-4 w-4" strokeWidth={1.5} />
+                <List className="h-4 w-4" strokeWidth={viewMode === "list" ? 2 : 1.5} />
               </button>
               <button
                 onClick={() => setViewMode("map")}
-                className={`rounded-lg p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center transition-all ${viewMode === "map" ? "bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                className={`rounded-lg p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center transition-all ${
+                  viewMode === "map"
+                    ? "bg-white shadow-sm text-gray-900"
+                    : "text-gray-400 hover:text-gray-600"
+                }`}
                 aria-label="Map view"
               >
-                <Map className="h-4 w-4" strokeWidth={1.5} />
+                <Map className="h-4 w-4" strokeWidth={viewMode === "map" ? 2 : 1.5} />
               </button>
             </div>
           </div>
@@ -215,7 +223,29 @@ function SearchContent() {
               กลับหน้าหลัก
             </Link>
           </div>
+        ) : viewMode === "map" ? (
+          // Map View - show all branches from all results
+          <div className="space-y-4">
+            <MapView
+              branches={results.flatMap((r) => r.branches)}
+              userLocation={{ lat, lng }}
+              className="h-[400px] sm:h-[500px] rounded-2xl overflow-hidden"
+              onBranchClick={(branch) => {
+                // Find the product that has this branch and select it
+                const product = results.find((r) =>
+                  r.branches.some((b) => b.branch.id === branch.branch.id)
+                );
+                if (product) {
+                  handleProductClick(product);
+                }
+              }}
+            />
+            <p className="text-sm text-gray-500 text-center">
+              แตะที่หมุดเพื่อดูรายละเอียดสาขา
+            </p>
+          </div>
         ) : (
+          // List View
           <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {results.map((result) => (
               <ProductCard key={result.product.id} result={result} onClick={() => handleProductClick(result)} />
