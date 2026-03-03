@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Mail, Lock, User, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, signInWithGoogle, signInWithEmail, signUpWithEmail, isLoading } = useAuth();
@@ -37,7 +37,6 @@ export default function LoginPage() {
       setError("");
       setGoogleLoading(true);
       await signInWithGoogle();
-      // Note: Page will redirect to Google, so we don't reset loading
     } catch (err: any) {
       setGoogleLoading(false);
       setError(err.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วย Google");
@@ -66,7 +65,7 @@ export default function LoginPage() {
           router.push("/");
         }
       }
-    } catch (err) {
+    } catch {
       setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
     } finally {
       setLoading(false);
@@ -210,6 +209,18 @@ export default function LoginPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      </main>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
 
