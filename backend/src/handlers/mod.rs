@@ -24,12 +24,29 @@ fn haversine_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
     r * c
 }
 
-// GET /api/health
+/// Health check endpoint
+#[utoipa::path(
+    get,
+    path = "/api/health",
+    tag = "Health",
+    responses(
+        (status = 200, description = "Service is healthy", body = String)
+    )
+)]
 pub async fn health_check() -> &'static str {
     "OK"
 }
 
-// GET /api/products
+/// Get all products
+#[utoipa::path(
+    get,
+    path = "/api/products",
+    tag = "Products",
+    responses(
+        (status = 200, description = "List of all products", body = Vec<Product>),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_products(State(db): State<AppState>) -> Result<Json<Vec<Product>>, StatusCode> {
     match db.get_products().await {
         Ok(products) => Ok(Json(products)),
@@ -37,7 +54,22 @@ pub async fn get_products(State(db): State<AppState>) -> Result<Json<Vec<Product
     }
 }
 
-// GET /api/products/search?query=...&lat=...&lng=...&radius_km=...
+/// Search products by name and find nearby branches with stock
+#[utoipa::path(
+    get,
+    path = "/api/products/search",
+    tag = "Products",
+    params(
+        ("query" = Option<String>, Query, description = "Search query (product name in English or Thai)"),
+        ("lat" = Option<f64>, Query, description = "User's latitude (default: 13.7563 Bangkok)"),
+        ("lng" = Option<f64>, Query, description = "User's longitude (default: 100.5018 Bangkok)"),
+        ("radius_km" = Option<f64>, Query, description = "Search radius in kilometers (default: 5)")
+    ),
+    responses(
+        (status = 200, description = "Search results with products and nearby branches", body = Vec<SearchResult>),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn search_products(
     State(db): State<AppState>,
     Query(params): Query<SearchQuery>,
@@ -51,7 +83,7 @@ pub async fn search_products(
     let branches = db.get_branches().await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     let all_promotions = db.get_promotions().await.unwrap_or_default();
 
-    let user_lat = params.lat.unwrap_or(13.7563); // Default: Bangkok
+    let user_lat = params.lat.unwrap_or(13.7563);
     let user_lng = params.lng.unwrap_or(100.5018);
     let radius = params.radius_km.unwrap_or(5.0);
 
@@ -68,7 +100,7 @@ pub async fn search_products(
         for inv in inventory {
             if let Some(branch) = branches.iter().find(|b| b.id == inv.branch_id) {
                 let distance = haversine_distance(user_lat, user_lng, branch.latitude, branch.longitude);
-                
+
                 if distance <= radius {
                     let promos: Vec<Promotion> = all_promotions
                         .iter()
@@ -99,7 +131,16 @@ pub async fn search_products(
     Ok(Json(results))
 }
 
-// GET /api/branches
+/// Get all branches
+#[utoipa::path(
+    get,
+    path = "/api/branches",
+    tag = "Branches",
+    responses(
+        (status = 200, description = "List of all branches", body = Vec<Branch>),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_branches(State(db): State<AppState>) -> Result<Json<Vec<Branch>>, StatusCode> {
     match db.get_branches().await {
         Ok(branches) => Ok(Json(branches)),
@@ -107,7 +148,20 @@ pub async fn get_branches(State(db): State<AppState>) -> Result<Json<Vec<Branch>
     }
 }
 
-// GET /api/branches/:id
+/// Get a specific branch by ID
+#[utoipa::path(
+    get,
+    path = "/api/branches/{id}",
+    tag = "Branches",
+    params(
+        ("id" = String, Path, description = "Branch UUID")
+    ),
+    responses(
+        (status = 200, description = "Branch details", body = Branch),
+        (status = 404, description = "Branch not found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_branch(
     State(db): State<AppState>,
     Path(id): Path<String>,
@@ -119,7 +173,16 @@ pub async fn get_branch(
     }
 }
 
-// GET /api/promotions
+/// Get all promotions
+#[utoipa::path(
+    get,
+    path = "/api/promotions",
+    tag = "Promotions",
+    responses(
+        (status = 200, description = "List of all promotions", body = Vec<Promotion>),
+        (status = 500, description = "Internal server error")
+    )
+)]
 pub async fn get_promotions(State(db): State<AppState>) -> Result<Json<Vec<Promotion>>, StatusCode> {
     match db.get_promotions().await {
         Ok(promotions) => Ok(Json(promotions)),
