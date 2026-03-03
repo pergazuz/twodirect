@@ -20,6 +20,11 @@ export const mockBranches: Branch[] = [
   { id: "b6", name: "7-Eleven Ratchada", name_th: "7-Eleven รัชดา", address: "Ratchadaphisek Soi 3", address_th: "รัชดาภิเษก ซอย 3", latitude: 13.7610, longitude: 100.5740, opening_hours: "24 ชั่วโมง", phone: "02-276-3333" },
   { id: "b7", name: "7-Eleven Ari", name_th: "7-Eleven อารีย์", address: "Phahonyothin Soi 7", address_th: "พหลโยธิน ซอย 7", latitude: 13.7790, longitude: 100.5440, opening_hours: "24 ชั่วโมง", phone: "02-279-8888" },
   { id: "b8", name: "7-Eleven Ekkamai", name_th: "7-Eleven เอกมัย", address: "Ekkamai Soi 5", address_th: "เอกมัย ซอย 5", latitude: 13.7230, longitude: 100.5850, opening_hours: "24 ชั่วโมง", phone: "02-391-7777" },
+  // เขตราษฎร์บูรณะ branches
+  { id: "b9", name: "7-Eleven Rat Burana", name_th: "7-Eleven ราษฎร์บูรณะ", address: "Rat Burana Road", address_th: "ถนนราษฎร์บูรณะ", latitude: 13.6795, longitude: 100.5015, opening_hours: "24 ชั่วโมง", phone: "02-427-1111" },
+  { id: "b10", name: "7-Eleven Suksawat 30", name_th: "7-Eleven สุขสวัสดิ์ 30", address: "Suksawat Road Soi 30", address_th: "สุขสวัสดิ์ ซอย 30", latitude: 13.6720, longitude: 100.5085, opening_hours: "24 ชั่วโมง", phone: "02-427-2222" },
+  { id: "b11", name: "7-Eleven Pracha Uthit", name_th: "7-Eleven ประชาอุทิศ", address: "Pracha Uthit Road", address_th: "ถนนประชาอุทิศ", latitude: 13.6850, longitude: 100.5120, opening_hours: "24 ชั่วโมง", phone: "02-427-3333" },
+  { id: "b12", name: "7-Eleven Rama 2 Soi 33", name_th: "7-Eleven พระราม 2 ซอย 33", address: "Rama 2 Road Soi 33", address_th: "พระราม 2 ซอย 33", latitude: 13.6680, longitude: 100.4950, opening_hours: "24 ชั่วโมง", phone: "02-427-4444" },
 ];
 
 export const mockPromotions: Promotion[] = [
@@ -30,14 +35,14 @@ export const mockPromotions: Promotion[] = [
 
 // Mock inventory data
 const mockInventory: Record<string, Record<string, number>> = {
-  "1": { b1: 15, b2: 20, b3: 0, b6: 12, b8: 8 },
-  "2": { b1: 8, b3: 10, b6: 15 },
-  "3": { b1: 25, b5: 50, b8: 20 },
-  "4": { b1: 10, b2: 15, b5: 8, b7: 20 },
-  "5": { b1: 5, b3: 7, b6: 3, b8: 4 },
-  "6": { b2: 12, b4: 18, b7: 7 },
-  "7": { b2: 8, b4: 12, b7: 15 },
-  "8": { b3: 30, b5: 25, b8: 18 },
+  "1": { b1: 15, b2: 20, b3: 0, b6: 12, b8: 8, b9: 25, b10: 18, b11: 22, b12: 30 },
+  "2": { b1: 8, b3: 10, b6: 15, b9: 18, b11: 14, b12: 20 },
+  "3": { b1: 25, b5: 50, b8: 20, b9: 40, b10: 30, b11: 35, b12: 45 },
+  "4": { b1: 10, b2: 15, b5: 8, b7: 20, b9: 15, b10: 12, b11: 18, b12: 20 },
+  "5": { b1: 5, b3: 7, b6: 3, b8: 4, b9: 12, b10: 8, b12: 15 },
+  "6": { b2: 12, b4: 18, b7: 7, b9: 8, b11: 10, b12: 12 },
+  "7": { b2: 8, b4: 12, b7: 15, b9: 20, b10: 15, b11: 25, b12: 18 },
+  "8": { b3: 30, b5: 25, b8: 18, b9: 35, b11: 28, b12: 40 },
 };
 
 export function searchMockProducts(query: string, userLat: number, userLng: number, radiusKm: number = 5): SearchResult[] {

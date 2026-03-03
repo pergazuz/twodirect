@@ -2,7 +2,7 @@
 
 import { SearchResult } from "@/types";
 import { formatPrice } from "@/lib/utils";
-import { Store, ChevronRight } from "lucide-react";
+import { Store, ChevronRight, Package } from "lucide-react";
 import { PromoBadge } from "./PromoBadge";
 
 interface ProductCardProps {
@@ -21,46 +21,61 @@ export function ProductCard({ result, onClick }: ProductCardProps) {
   return (
     <div
       onClick={onClick}
-      className="cursor-pointer rounded-xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:border-green-200 hover:shadow-md"
+      className="cursor-pointer rounded-2xl bg-white p-4 transition-all hover:bg-gray-50 active:bg-gray-100 border border-gray-100 sm:p-5"
     >
       <div className="flex gap-4">
-        {/* Product Image Placeholder */}
-        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
-          <span className="text-3xl">📦</span>
+        {/* Product Image */}
+        <div className="relative h-14 w-14 flex-shrink-0 rounded-xl bg-gray-50 overflow-hidden sm:h-16 sm:w-16">
+          {product.image_url ? (
+            <img
+              src={product.image_url}
+              alt={product.name_th}
+              className="h-full w-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+              }}
+            />
+          ) : null}
+          <div className={`flex h-full w-full items-center justify-center absolute inset-0 ${product.image_url ? 'hidden' : ''}`}>
+            <Package className="h-6 w-6 text-gray-300 sm:h-7 sm:w-7" strokeWidth={1.5} />
+          </div>
         </div>
 
-        <div className="flex-1">
-          <div className="flex items-start justify-between">
-            <div>
-              <h3 className="font-semibold text-gray-900">{product.name_th}</h3>
-              <p className="text-sm text-gray-500">{product.name}</p>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <h3 className="font-medium text-gray-900 text-sm leading-snug sm:text-base">
+                {product.name_th}
+              </h3>
+              <p className="text-xs text-gray-400 mt-0.5 sm:text-sm">{product.name}</p>
             </div>
-            <span className="text-lg font-bold text-green-600">
+            <span className="text-sm font-semibold text-gray-900 flex-shrink-0 sm:text-base">
               {formatPrice(product.price)}
             </span>
           </div>
 
-          <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
-            <Store className="h-4 w-4" />
-            <span>
-              มีใน <span className="font-medium text-green-600">{branches.length}</span> สาขา
-              ({totalStock} ชิ้น)
-            </span>
+          <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 sm:text-sm">
+            <div className="flex items-center gap-1.5">
+              <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span>
+                <span className="font-medium text-gray-700">{branches.length}</span> สาขา
+              </span>
+            </div>
+            {nearestBranch && (
+              <span className="text-gray-400">
+                {nearestBranch.distance_km} km
+              </span>
+            )}
           </div>
 
-          {nearestBranch && (
-            <p className="mt-1 text-sm text-gray-500">
-              ใกล้สุด: {nearestBranch.branch.name_th} ({nearestBranch.distance_km} km)
-            </p>
-          )}
-
           {hasExclusivePromo && (
-            <div className="mt-2">
+            <div className="mt-2.5">
               <PromoBadge
                 promotion={{
                   id: "exclusive",
                   title: "twodirect Exclusive",
-                  title_th: "ส่วนลดพิเศษ twodirect",
+                  title_th: "ส่วนลด twodirect",
                   is_twodirect_exclusive: true,
                 }}
               />
@@ -68,7 +83,7 @@ export function ProductCard({ result, onClick }: ProductCardProps) {
           )}
         </div>
 
-        <ChevronRight className="h-5 w-5 flex-shrink-0 self-center text-gray-400" />
+        <ChevronRight className="h-5 w-5 flex-shrink-0 self-center text-gray-300" />
       </div>
     </div>
   );

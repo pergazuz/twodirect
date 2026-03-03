@@ -6,7 +6,7 @@ import { SearchBar, ProductCard, BranchCard } from "@/components";
 import { SearchResult } from "@/types";
 import { searchProducts } from "@/lib/api";
 import { searchMockProducts, mockProducts } from "@/lib/mock-data";
-import { ArrowLeft, Map, List, Loader2 } from "lucide-react";
+import { ArrowLeft, Map, List, Loader2, Search, Package, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 // Set to true to use Rust backend, false for mock data
@@ -102,11 +102,15 @@ function SearchContent() {
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white shadow-sm">
-        <div className="mx-auto max-w-lg px-4 py-3">
+      <header className="sticky top-0 z-10 bg-white border-b border-gray-100">
+        <div className="mx-auto max-w-lg px-3 py-3 sm:px-4 sm:py-4 md:max-w-2xl lg:max-w-4xl">
           <div className="flex items-center gap-3">
-            <button onClick={handleBack} className="rounded-full p-2 hover:bg-gray-100">
-              <ArrowLeft className="h-5 w-5 text-gray-600" />
+            <button
+              onClick={handleBack}
+              className="rounded-xl p-2.5 hover:bg-gray-50 active:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="h-5 w-5 text-gray-600" strokeWidth={1.5} />
             </button>
             <SearchBar onSearch={handleSearch} placeholder={searchQuery || "ค้นหาสินค้า..."} className="flex-1" />
           </div>
@@ -115,32 +119,35 @@ function SearchContent() {
 
       {/* Error Banner */}
       {error && (
-        <div className="mx-auto max-w-lg px-4 pt-4">
-          <div className="rounded-lg bg-amber-50 border border-amber-200 px-4 py-2 text-sm text-amber-700">
-            ⚠️ {error}
+        <div className="mx-auto max-w-lg px-3 pt-3 sm:px-4 sm:pt-4 md:max-w-2xl lg:max-w-4xl">
+          <div className="rounded-xl bg-amber-50 px-4 py-3 text-xs text-amber-700 flex items-center gap-2 sm:text-sm">
+            <AlertCircle className="h-4 w-4 flex-shrink-0" />
+            <span>{error}</span>
           </div>
         </div>
       )}
 
       {/* Results Header */}
       {!selectedProduct && (
-        <div className="mx-auto max-w-lg px-4 py-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              {loading ? "กำลังค้นหา..." : `พบ ${results.length} รายการ สำหรับ "${searchQuery || categoryParam}"`}
+        <div className="mx-auto max-w-lg px-3 py-4 sm:px-4 sm:py-5 md:max-w-2xl lg:max-w-4xl">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-gray-500 truncate">
+              {loading ? "กำลังค้นหา..." : `${results.length} รายการ`}
             </p>
-            <div className="flex gap-1 rounded-lg bg-gray-100 p-1">
+            <div className="flex gap-1 rounded-xl bg-gray-100 p-1 flex-shrink-0">
               <button
                 onClick={() => setViewMode("list")}
-                className={`rounded-md p-2 ${viewMode === "list" ? "bg-white shadow-sm" : ""}`}
+                className={`rounded-lg p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center transition-all ${viewMode === "list" ? "bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                aria-label="List view"
               >
-                <List className="h-4 w-4" />
+                <List className="h-4 w-4" strokeWidth={1.5} />
               </button>
               <button
                 onClick={() => setViewMode("map")}
-                className={`rounded-md p-2 ${viewMode === "map" ? "bg-white shadow-sm" : ""}`}
+                className={`rounded-lg p-2.5 min-h-[40px] min-w-[40px] flex items-center justify-center transition-all ${viewMode === "map" ? "bg-white shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                aria-label="Map view"
               >
-                <Map className="h-4 w-4" />
+                <Map className="h-4 w-4" strokeWidth={1.5} />
               </button>
             </div>
           </div>
@@ -148,41 +155,68 @@ function SearchContent() {
       )}
 
       {/* Content */}
-      <div className="mx-auto max-w-lg px-4 pb-8">
+      <div className="mx-auto max-w-lg px-3 pb-8 sm:px-4 sm:pb-10 md:max-w-2xl lg:max-w-4xl">
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-green-600" />
-            <p className="mt-4 text-gray-500">กำลังค้นหาสินค้า...</p>
+          <div className="flex flex-col items-center justify-center py-16 sm:py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-gray-400" strokeWidth={1.5} />
+            <p className="mt-4 text-sm text-gray-400">กำลังค้นหา...</p>
           </div>
         ) : selectedProduct ? (
           // Product Detail with Branch List
-          <div className="space-y-4">
-            <div className="rounded-xl bg-white p-4 shadow-sm">
+          <div className="space-y-4 sm:space-y-5">
+            <div className="rounded-2xl bg-white p-4 border border-gray-100 sm:p-5">
               <div className="flex gap-4">
-                <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-gray-100">
-                  <span className="text-3xl">📦</span>
+                <div className="relative h-16 w-16 flex-shrink-0 rounded-xl bg-gray-50 overflow-hidden sm:h-20 sm:w-20">
+                  {selectedProduct.product.image_url ? (
+                    <img
+                      src={selectedProduct.product.image_url}
+                      alt={selectedProduct.product.name_th}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <div className={`flex h-full w-full items-center justify-center absolute inset-0 ${selectedProduct.product.image_url ? 'hidden' : ''}`}>
+                    <Package className="h-7 w-7 text-gray-300 sm:h-8 sm:w-8" strokeWidth={1.5} />
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold">{selectedProduct.product.name_th}</h2>
-                  <p className="text-sm text-gray-500">{selectedProduct.product.name}</p>
-                  <p className="mt-1 text-lg font-bold text-green-600">฿{selectedProduct.product.price}</p>
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-base font-medium text-gray-900 sm:text-lg">{selectedProduct.product.name_th}</h2>
+                  <p className="text-sm text-gray-400 mt-0.5">{selectedProduct.product.name}</p>
+                  <p className="mt-2 text-lg font-semibold text-gray-900 sm:text-xl">฿{selectedProduct.product.price}</p>
                 </div>
               </div>
             </div>
-            <h3 className="font-semibold text-gray-900">สาขาที่มีสินค้า ({selectedProduct.branches.length} สาขา)</h3>
-            {selectedProduct.branches.map((b) => (
-              <BranchCard key={b.branch.id} branchWithStock={b} />
-            ))}
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-gray-900 text-sm sm:text-base">
+                สาขาที่มีสินค้า
+              </h3>
+              <span className="text-sm text-gray-400">{selectedProduct.branches.length} สาขา</span>
+            </div>
+            <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+              {selectedProduct.branches.map((b) => (
+                <BranchCard key={b.branch.id} branchWithStock={b} />
+              ))}
+            </div>
           </div>
         ) : results.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <span className="text-6xl">🔍</span>
-            <h3 className="mt-4 text-lg font-semibold text-gray-900">ไม่พบสินค้า</h3>
-            <p className="mt-2 text-gray-500">ลองค้นหาด้วยคำอื่น หรือตรวจสอบการสะกด</p>
-            <Link href="/" className="mt-4 text-green-600 hover:underline">กลับหน้าหลัก</Link>
+          <div className="flex flex-col items-center justify-center py-16 text-center sm:py-20">
+            <div className="rounded-2xl bg-gray-50 p-5 mb-4">
+              <Search className="h-10 w-10 text-gray-300" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-base font-medium text-gray-900 sm:text-lg">ไม่พบสินค้า</h3>
+            <p className="mt-2 text-sm text-gray-400 max-w-[240px]">ลองค้นหาด้วยคำอื่น หรือตรวจสอบการสะกด</p>
+            <Link
+              href="/"
+              className="mt-5 px-5 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors min-h-[44px] flex items-center"
+            >
+              กลับหน้าหลัก
+            </Link>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 md:grid md:grid-cols-2 md:gap-4 md:space-y-0">
             {results.map((result) => (
               <ProductCard key={result.product.id} result={result} onClick={() => handleProductClick(result)} />
             ))}

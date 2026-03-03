@@ -2,7 +2,7 @@
 
 import { Promotion } from "@/types";
 import { cn } from "@/lib/utils";
-import { Sparkles, Percent } from "lucide-react";
+import { Tag } from "lucide-react";
 
 interface PromoBadgeProps {
   promotion: Promotion;
@@ -16,20 +16,18 @@ export function PromoBadge({ promotion, size = "sm", className }: PromoBadgeProp
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full font-medium",
+        "inline-flex items-center gap-1 rounded-lg font-medium whitespace-nowrap",
         isExclusive
-          ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white"
-          : "bg-green-100 text-green-700",
-        size === "sm" ? "px-2 py-0.5 text-xs" : "px-3 py-1 text-sm",
+          ? "bg-gray-900 text-white"
+          : "bg-gray-100 text-gray-600",
+        size === "sm"
+          ? "px-2 py-1 text-[11px]"
+          : "px-2.5 py-1 text-xs",
         className
       )}
     >
-      {isExclusive ? (
-        <Sparkles className={cn(size === "sm" ? "h-3 w-3" : "h-4 w-4")} />
-      ) : (
-        <Percent className={cn(size === "sm" ? "h-3 w-3" : "h-4 w-4")} />
-      )}
-      {promotion.title_th}
+      <Tag className={cn(size === "sm" ? "h-3 w-3" : "h-3.5 w-3.5")} strokeWidth={1.5} />
+      <span className="truncate max-w-[100px]">{promotion.title_th}</span>
     </span>
   );
 }

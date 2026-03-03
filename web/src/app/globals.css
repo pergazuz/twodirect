@@ -12,6 +12,8 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-noto-thai);
+  /* Custom breakpoint for extra small screens (375px+) */
+  --breakpoint-xs: 375px;
 }
 
 body {
@@ -19,6 +21,14 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
   min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensure minimum touch target size for accessibility */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
 }
 
 /* Custom scrollbar */
@@ -37,4 +47,25 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #a1a1a1;
+}
+
+/* Safe area insets for notched devices (iPhone X+) */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevent zoom on input focus on iOS */
+@media screen and (max-width: 767px) {
+  input[type="text"],
+  input[type="search"],
+  textarea {
+    font-size: 16px;
+  }
 }
