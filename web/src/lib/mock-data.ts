@@ -1,0 +1,80 @@
+import { Product, Branch, Promotion, BranchWithStock, SearchResult } from "@/types";
+
+export const mockProducts: Product[] = [
+  { id: "1", name: "Coke Zero 500ml", name_th: "โค้ก ซีโร่ 500ml", category: "beverages", price: 25, image_url: "/products/coke.png" },
+  { id: "2", name: "Lay's Original 75g", name_th: "เลย์ รสดั้งเดิม 75g", category: "snacks", price: 35, image_url: "/products/lays.png" },
+  { id: "3", name: "Mama Shrimp Tom Yum", name_th: "มาม่า รสต้มยำกุ้ง", category: "instant-food", price: 8, image_url: "/products/mama.png" },
+  { id: "4", name: "All Cafe Latte", name_th: "ออลคาเฟ่ ลาเต้", category: "beverages", price: 45, image_url: "/products/coffee.png" },
+  { id: "5", name: "Chicken Rice", name_th: "ข้าวมันไก่", category: "ready-meals", price: 59, image_url: "/products/rice.png" },
+  { id: "6", name: "Onigiri Salmon", name_th: "โอนิกิริ แซลมอน", category: "ready-meals", price: 39, image_url: "/products/onigiri.png" },
+  { id: "7", name: "Meiji Milk 450ml", name_th: "เมจิ นมสด 450ml", category: "dairy", price: 32, image_url: "/products/milk.png" },
+  { id: "8", name: "Red Bull 250ml", name_th: "กระทิงแดง 250ml", category: "beverages", price: 15, image_url: "/products/redbull.png" },
+];
+
+export const mockBranches: Branch[] = [
+  { id: "b1", name: "7-Eleven Silom Soi 4", name_th: "7-Eleven สีลม ซอย 4", address: "Silom Soi 4, Bangrak", address_th: "สีลม ซอย 4 บางรัก", latitude: 13.7262, longitude: 100.5318, opening_hours: "24 ชั่วโมง", phone: "02-234-5678" },
+  { id: "b2", name: "7-Eleven Siam Square", name_th: "7-Eleven สยามสแควร์", address: "Siam Square Soi 3", address_th: "สยามสแควร์ ซอย 3", latitude: 13.7450, longitude: 100.5341, opening_hours: "24 ชั่วโมง", phone: "02-251-1234" },
+  { id: "b3", name: "7-Eleven Sukhumvit 21", name_th: "7-Eleven สุขุมวิท 21", address: "Sukhumvit Soi 21 (Asoke)", address_th: "สุขุมวิท ซอย 21 อโศก", latitude: 13.7380, longitude: 100.5610, opening_hours: "24 ชั่วโมง", phone: "02-259-9876" },
+  { id: "b4", name: "7-Eleven Thonglor", name_th: "7-Eleven ทองหล่อ", address: "Thonglor Soi 10", address_th: "ทองหล่อ ซอย 10", latitude: 13.7320, longitude: 100.5780, opening_hours: "24 ชั่วโมง", phone: "02-381-5555" },
+  { id: "b5", name: "7-Eleven Chatuchak", name_th: "7-Eleven จตุจักร", address: "Phahonyothin Road", address_th: "ถนนพหลโยธิน", latitude: 13.7990, longitude: 100.5500, opening_hours: "24 ชั่วโมง", phone: "02-272-1111" },
+  { id: "b6", name: "7-Eleven Ratchada", name_th: "7-Eleven รัชดา", address: "Ratchadaphisek Soi 3", address_th: "รัชดาภิเษก ซอย 3", latitude: 13.7610, longitude: 100.5740, opening_hours: "24 ชั่วโมง", phone: "02-276-3333" },
+  { id: "b7", name: "7-Eleven Ari", name_th: "7-Eleven อารีย์", address: "Phahonyothin Soi 7", address_th: "พหลโยธิน ซอย 7", latitude: 13.7790, longitude: 100.5440, opening_hours: "24 ชั่วโมง", phone: "02-279-8888" },
+  { id: "b8", name: "7-Eleven Ekkamai", name_th: "7-Eleven เอกมัย", address: "Ekkamai Soi 5", address_th: "เอกมัย ซอย 5", latitude: 13.7230, longitude: 100.5850, opening_hours: "24 ชั่วโมง", phone: "02-391-7777" },
+];
+
+export const mockPromotions: Promotion[] = [
+  { id: "p1", title: "10% off via twodirect", title_th: "ลด 10% ผ่าน twodirect", discount_percent: 10, is_twodirect_exclusive: true },
+  { id: "p2", product_id: "1", title: "Buy 2 Get 1 Free", title_th: "ซื้อ 2 แถม 1", is_twodirect_exclusive: false },
+  { id: "p3", product_id: "4", title: "All Cafe 15% off", title_th: "ออลคาเฟ่ ลด 15%", discount_percent: 15, is_twodirect_exclusive: true },
+];
+
+// Mock inventory data
+const mockInventory: Record<string, Record<string, number>> = {
+  "1": { b1: 15, b2: 20, b3: 0, b6: 12, b8: 8 },
+  "2": { b1: 8, b3: 10, b6: 15 },
+  "3": { b1: 25, b5: 50, b8: 20 },
+  "4": { b1: 10, b2: 15, b5: 8, b7: 20 },
+  "5": { b1: 5, b3: 7, b6: 3, b8: 4 },
+  "6": { b2: 12, b4: 18, b7: 7 },
+  "7": { b2: 8, b4: 12, b7: 15 },
+  "8": { b3: 30, b5: 25, b8: 18 },
+};
+
+export function searchMockProducts(query: string, userLat: number, userLng: number, radiusKm: number = 5): SearchResult[] {
+  const queryLower = query.toLowerCase();
+  const results: SearchResult[] = [];
+
+  for (const product of mockProducts) {
+    if (product.name.toLowerCase().includes(queryLower) || product.name_th.includes(query)) {
+      const inventory = mockInventory[product.id] || {};
+      const branchesWithStock: BranchWithStock[] = [];
+
+      for (const branch of mockBranches) {
+        const qty = inventory[branch.id] || 0;
+        if (qty > 0) {
+          const distance = calculateDistance(userLat, userLng, branch.latitude, branch.longitude);
+          if (distance <= radiusKm) {
+            const promos = mockPromotions.filter(p => !p.product_id || p.product_id === product.id);
+            branchesWithStock.push({ branch, quantity: qty, distance_km: distance, promotions: promos });
+          }
+        }
+      }
+
+      branchesWithStock.sort((a, b) => a.distance_km - b.distance_km);
+      if (branchesWithStock.length > 0) {
+        results.push({ product, branches: branchesWithStock });
+      }
+    }
+  }
+
+  return results;
+}
+
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 100) / 100;
+}
+
