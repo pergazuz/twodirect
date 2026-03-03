@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { SearchBar, CategoryButton, categories } from "@/components";
+import { SearchBar, StoreSelector, BannerCarousel } from "@/components";
 import { MapPin, Loader2, Navigation, Tag } from "lucide-react";
 import { useGeolocation } from "@/hooks/useGeolocation";
 
@@ -13,8 +13,8 @@ export default function Home() {
     router.push(`/search?q=${encodeURIComponent(query)}&lat=${location.lat}&lng=${location.lng}`);
   };
 
-  const handleCategoryClick = (categoryId: string) => {
-    router.push(`/search?category=${categoryId}&lat=${location.lat}&lng=${location.lng}`);
+  const handleStoreClick = (storeId: string) => {
+    router.push(`/search?store=${storeId}&lat=${location.lat}&lng=${location.lng}`);
   };
 
   const handleLocationClick = () => {
@@ -37,13 +37,14 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-gray-900 px-4 pb-12 pt-6 sm:pb-14 sm:pt-8">
         <div className="mx-auto max-w-lg md:max-w-2xl lg:max-w-4xl">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h1 className="text-xl font-semibold text-white sm:text-2xl">TwoDirect</h1>
+              <p className="text-sm text-gray-400 mt-0.5">ค้นหาสินค้า ตรงไปหยิบ</p>
             </div>
             <button
               onClick={handleLocationClick}
@@ -72,30 +73,28 @@ export default function Home() {
         />
       </section>
 
-      {/* Categories */}
-      <section className="mx-auto mt-8 max-w-lg px-4 sm:mt-10 md:max-w-2xl lg:max-w-4xl">
-        <h2 className="mb-4 text-sm font-medium text-gray-500 uppercase tracking-wide sm:mb-5">หมวดหมู่</h2>
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6 sm:gap-4">
-          {categories.map((cat) => (
-            <CategoryButton
-              key={cat.id}
-              icon={cat.icon}
-              label={cat.label}
-              onClick={() => handleCategoryClick(cat.id)}
-            />
-          ))}
-        </div>
+      {/* Banner Carousel */}
+      <section className="mx-auto mt-6 max-w-lg px-4 sm:mt-8 md:max-w-2xl lg:max-w-4xl">
+        <BannerCarousel />
+      </section>
+
+      {/* Store Selector */}
+      <section className="mx-auto mt-6 max-w-lg sm:mt-8 md:max-w-2xl lg:max-w-4xl">
+        <h2 className="mb-3 px-4 text-sm font-medium text-gray-500 uppercase tracking-wide sm:mb-4">
+          ร้านค้า
+        </h2>
+        <StoreSelector onStoreClick={handleStoreClick} className="px-0" />
       </section>
 
       {/* Promo Banner */}
-      <section className="mx-auto mt-8 max-w-lg px-4 sm:mt-10 md:max-w-2xl lg:max-w-4xl">
-        <div className="rounded-2xl bg-gray-50 p-5 sm:p-6">
+      <section className="mx-auto mt-6 max-w-lg px-4 sm:mt-8 md:max-w-2xl lg:max-w-4xl">
+        <div className="rounded-2xl bg-white p-5 sm:p-6 border border-gray-100">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-gray-900 p-2.5">
               <Tag className="h-5 w-5 text-white" strokeWidth={1.5} />
             </div>
             <div>
-              <p className="font-medium text-gray-900 text-sm sm:text-base">ส่วนลด 10% สำหรับผู้ใช้ twodirect</p>
+              <p className="font-medium text-gray-900 text-sm sm:text-base">ส่วนลด 10% สำหรับผู้ใช้ TwoDirect</p>
               <p className="text-sm text-gray-500 mt-0.5">ค้นหาและไปรับสินค้าผ่านแอป</p>
             </div>
           </div>
@@ -103,14 +102,14 @@ export default function Home() {
       </section>
 
       {/* Popular Searches */}
-      <section className="mx-auto mt-8 max-w-lg px-4 pb-8 sm:mt-10 sm:pb-10 md:max-w-2xl lg:max-w-4xl">
-        <h2 className="mb-4 text-sm font-medium text-gray-500 uppercase tracking-wide sm:mb-5">ยอดนิยม</h2>
+      <section className="mx-auto mt-6 max-w-lg px-4 pb-8 sm:mt-8 sm:pb-10 md:max-w-2xl lg:max-w-4xl">
+        <h2 className="mb-3 text-sm font-medium text-gray-500 uppercase tracking-wide sm:mb-4">ยอดนิยม</h2>
         <div className="flex flex-wrap gap-2 sm:gap-3">
           {["โค้ก ซีโร่", "มาม่า", "ออลคาเฟ่", "ข้าวมันไก่", "นมเมจิ", "กระทิงแดง"].map((term) => (
             <button
               key={term}
               onClick={() => handleSearch(term)}
-              className="rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 min-h-[44px]"
+              className="rounded-full bg-white border border-gray-200 px-4 py-2.5 text-sm text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 min-h-[44px]"
             >
               {term}
             </button>
@@ -119,9 +118,9 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-gray-100 py-6 sm:py-8">
+      <footer className="bg-white border-t border-gray-100 py-6 sm:py-8">
         <div className="mx-auto max-w-lg px-4 text-center md:max-w-2xl">
-          <p className="text-sm text-gray-400">© 2026 twodirect</p>
+          <p className="text-sm text-gray-400">© 2026 TwoDirect</p>
         </div>
       </footer>
     </main>

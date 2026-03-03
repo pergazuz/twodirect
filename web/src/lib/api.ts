@@ -20,12 +20,14 @@ export async function searchProducts(
   query: string,
   lat?: number,
   lng?: number,
-  radiusKm?: number
+  radiusKm?: number,
+  storeChain?: string
 ): Promise<SearchResult[]> {
   const params = new URLSearchParams({ query });
   if (lat !== undefined) params.set("lat", lat.toString());
   if (lng !== undefined) params.set("lng", lng.toString());
   if (radiusKm !== undefined) params.set("radius_km", radiusKm.toString());
+  if (storeChain) params.set("chain", storeChain);
 
   const res = await fetch(`${API_BASE}/api/products/search?${params}`);
   if (!res.ok) throw new Error("Failed to search products");

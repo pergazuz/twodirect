@@ -2,11 +2,11 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
-import { SearchBar, ProductCard, BranchCard, MapView } from "@/components";
+import { SearchBar, ProductCard, BranchCard, MapView, getStoreName, BannerCarousel } from "@/components";
 import { SearchResult } from "@/types";
 import { searchProducts } from "@/lib/api";
 import { searchMockProducts, mockProducts } from "@/lib/mock-data";
-import { ArrowLeft, Map, List, Loader2, Search, Package, AlertCircle } from "lucide-react";
+import { ArrowLeft, Map, List, Loader2, Search, Package, AlertCircle, X, Store } from "lucide-react";
 import Link from "next/link";
 
 // Set to true to use Rust backend, false for mock data
@@ -29,6 +29,7 @@ function SearchContent() {
   // Support both ?q= and ?category= parameters
   const queryParam = searchParams.get("q") || "";
   const categoryParam = searchParams.get("category") || "";
+  const storeParam = searchParams.get("store") || "";
   const searchQuery = queryParam || categorySearchTerms[categoryParam] || categoryParam;
 
   const lat = parseFloat(searchParams.get("lat") || "13.7563");
@@ -41,28 +42,41 @@ function SearchContent() {
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
   useEffect(() => {
-    // Search if we have a query or category
-    if (searchQuery || categoryParam) {
+    // Search if we have a query, category, or store filter
+    if (searchQuery || categoryParam || storeParam) {
       setLoading(true);
       setError(null);
 
-      if (USE_BACKEND && searchQuery) {
+      // If only store is selected (no search query), show all products from that store
+      const effectiveQuery = searchQuery || "";
+
+      if (USE_BACKEND && effectiveQuery) {
         // Use Rust backend API → Supabase
-        searchProducts(searchQuery, lat, lng, 10)
+        searchProducts(effectiveQuery, lat, lng, 10, storeParam || undefined)
           .then((data) => {
-            setResults(data);
+            // Filter by store if specified
+            let filteredData = data;
+            if (storeParam) {
+              filteredData = data.map(result => ({
+                ...result,
+                branches: result.branches.filter(b =>
+                  (b.branch as any).chain === storeParam
+                )
+              })).filter(result => result.branches.length > 0);
+            }
+            setResults(filteredData);
             setLoading(false);
           })
           .catch((err) => {
             console.error("API Error, falling back to mock data:", err);
             // Fallback to mock data if backend is not running
-            const mockResults = searchMockProducts(searchQuery, lat, lng, 10);
+            const mockResults = searchMockProducts(effectiveQuery, lat, lng, 10, storeParam || undefined);
             setResults(mockResults);
             setError("Backend ไม่พร้อมใช้งาน - ใช้ข้อมูลจำลอง");
             setLoading(false);
           });
       } else {
-        // Use mock data - filter by category if provided
+        // Use mock data
         let mockResults: SearchResult[];
         if (categoryParam && !searchQuery) {
           // Filter mock products by category
@@ -71,8 +85,11 @@ function SearchContent() {
             product,
             branches: [] // No branch data for category browse
           }));
+        } else if (storeParam && !searchQuery) {
+          // Show all products from the selected store
+          mockResults = searchMockProducts("", lat, lng, 50, storeParam);
         } else {
-          mockResults = searchMockProducts(searchQuery, lat, lng, 10);
+          mockResults = searchMockProducts(effectiveQuery, lat, lng, 10, storeParam || undefined);
         }
         setResults(mockResults);
         setLoading(false);
@@ -81,10 +98,20 @@ function SearchContent() {
       setLoading(false);
       setResults([]);
     }
-  }, [searchQuery, categoryParam, lat, lng]);
+  }, [searchQuery, categoryParam, storeParam, lat, lng]);
 
   const handleSearch = (newQuery: string) => {
-    router.push(`/search?q=${encodeURIComponent(newQuery)}&lat=${lat}&lng=${lng}`);
+    const storeQuery = storeParam ? `&store=${storeParam}` : "";
+    router.push(`/search?q=${encodeURIComponent(newQuery)}&lat=${lat}&lng=${lng}${storeQuery}`);
+  };
+
+  const handleClearStore = () => {
+    const params = new URLSearchParams();
+    if (queryParam) params.set("q", queryParam);
+    if (categoryParam) params.set("category", categoryParam);
+    params.set("lat", lat.toString());
+    params.set("lng", lng.toString());
+    router.push(`/search?${params.toString()}`);
   };
 
   const handleProductClick = (result: SearchResult) => {
@@ -123,6 +150,24 @@ function SearchContent() {
           <div className="rounded-xl bg-amber-50 px-4 py-3 text-xs text-amber-700 flex items-center gap-2 sm:text-sm">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>{error}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Store Banner */}
+      {storeParam && !selectedProduct && (
+        <div className="mx-auto max-w-lg px-3 pt-3 sm:px-4 sm:pt-4 md:max-w-2xl lg:max-w-4xl">
+          <BannerCarousel storeId={storeParam} className="mb-3" />
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">กำลังช้อปที่:</span>
+            <button
+              onClick={handleClearStore}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+            >
+              <Store className="h-3.5 w-3.5" strokeWidth={1.5} />
+              <span>{getStoreName(storeParam)}</span>
+              <X className="h-3.5 w-3.5 ml-0.5" strokeWidth={2} />
+            </button>
           </div>
         </div>
       )}
