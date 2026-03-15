@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Clock, MapPin, Navigation, X, Package, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { Reservation, ReservationStatus } from "@/hooks/useReservations";
+import { Clock, MapPin, Navigation, X, Package, CheckCircle, XCircle, AlertCircle, CreditCard, QrCode, Smartphone } from "lucide-react";
+import { Reservation, ReservationStatus, PaymentMethod } from "@/hooks/useReservations";
 
 interface ReservationCardProps {
   reservation: Reservation;
@@ -31,6 +31,18 @@ function formatTimeRemaining(deadline: string): string {
     return `${hours} ชม. ${minutes} นาที`;
   }
   return `${minutes} นาที`;
+}
+
+function getPaymentMethodDisplay(method?: PaymentMethod): { label: string; icon: typeof CreditCard } | null {
+  if (!method) return null;
+
+  const methods = {
+    credit_card: { label: "บัตรเครดิต/เดบิต", icon: CreditCard },
+    promptpay: { label: "พร้อมเพย์", icon: QrCode },
+    mobile_banking: { label: "Mobile Banking", icon: Smartphone },
+  };
+
+  return methods[method];
 }
 
 export function ReservationCard({ reservation, onCancel, onComplete }: ReservationCardProps) {
@@ -72,8 +84,16 @@ export function ReservationCard({ reservation, onCancel, onComplete }: Reservati
       <div className="p-4">
         {/* Product Info */}
         <div className="flex items-start gap-3 mb-4">
-          <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Package className="h-6 w-6 text-gray-400" />
+          <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {reservation.productImage ? (
+              <img
+                src={reservation.productImage}
+                alt={reservation.productNameTh}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Package className="h-6 w-6 text-gray-400" />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-medium text-gray-900 text-sm truncate">{reservation.productNameTh}</p>
@@ -90,6 +110,22 @@ export function ReservationCard({ reservation, onCancel, onComplete }: Reservati
             <p className="text-xs text-gray-400">{reservation.branchAddress}</p>
           </div>
         </div>
+
+        {/* Payment Method */}
+        {reservation.paymentMethod && (() => {
+          const paymentInfo = getPaymentMethodDisplay(reservation.paymentMethod);
+          if (!paymentInfo) return null;
+          const PaymentIcon = paymentInfo.icon;
+          return (
+            <div className="flex items-center gap-2 text-sm text-gray-600 mb-3 p-2 bg-gray-50 rounded-lg">
+              <PaymentIcon className="h-4 w-4 text-gray-400" />
+              <span className="text-xs">
+                {paymentInfo.label}
+                {reservation.paymentDetails && ` • ${reservation.paymentDetails}`}
+              </span>
+            </div>
+          );
+        })()}
 
         {/* Time Remaining (for pending) */}
         {isPending && (

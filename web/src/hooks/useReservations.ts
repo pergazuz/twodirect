@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 
 export type ReservationStatus = "pending" | "completed" | "expired" | "cancelled";
+export type PaymentMethod = "credit_card" | "promptpay" | "mobile_banking";
 
 export interface Reservation {
   id: string;
@@ -23,6 +24,8 @@ export interface Reservation {
   branchLng?: number;
   quantity?: number;
   status: ReservationStatus;
+  paymentMethod?: PaymentMethod;
+  paymentDetails?: string;
   createdAt: string;
   pickupDeadline: string;
   completedAt?: string;
@@ -53,8 +56,12 @@ function dbToReservation(record: any): Reservation {
     branchAddress: record.branch_address_th,
     branchChain: record.branch_chain,
     status: record.status,
+    paymentMethod: record.payment_method,
+    paymentDetails: record.payment_details,
     createdAt: record.created_at,
     pickupDeadline: record.pickup_deadline,
+    completedAt: record.completed_at,
+    cancelledAt: record.cancelled_at,
   };
 }
 
@@ -157,6 +164,8 @@ export function useReservations() {
       branchLng?: number;
       quantity?: number;
       pickupHours: number;
+      paymentMethod?: PaymentMethod;
+      paymentDetails?: string;
     }): Promise<Reservation> => {
       // Require login to make reservations
       if (!user) {
@@ -185,6 +194,8 @@ export function useReservations() {
             status: "pending",
             reservation_code: code,
             pickup_deadline: deadline.toISOString(),
+            payment_method: data.paymentMethod,
+            payment_details: data.paymentDetails,
           })
           .select()
           .single();

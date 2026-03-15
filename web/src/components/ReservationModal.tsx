@@ -3,7 +3,12 @@
 import { useState } from "react";
 import { X, Clock, MapPin, AlertTriangle, ShoppingBag, Check } from "lucide-react";
 import { Product, Branch } from "@/types";
-import { useReservations, Reservation } from "@/hooks/useReservations";
+import { useReservations, Reservation, PaymentMethod } from "@/hooks/useReservations";
+import { PaymentMethodSelector } from "./payment/PaymentMethodSelector";
+import { CreditCardForm } from "./payment/CreditCardForm";
+import { PromptPayForm } from "./payment/PromptPayForm";
+import { MobileBankingForm } from "./payment/MobileBankingForm";
+import { PaymentProcessing } from "./payment/PaymentProcessing";
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -14,6 +19,8 @@ interface ReservationModalProps {
   pickupHours?: number;
 }
 
+type Step = "details" | "payment_method" | "payment_form" | "processing" | "success";
+
 export function ReservationModal({
   isOpen,
   onClose,
@@ -22,17 +29,30 @@ export function ReservationModal({
   quantity,
   pickupHours = 2,
 }: ReservationModalProps) {
-  const [isConfirming, setIsConfirming] = useState(false);
+  const [step, setStep] = useState<Step>("details");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [paymentDetails, setPaymentDetails] = useState<string>("");
   const [confirmedReservation, setConfirmedReservation] = useState<Reservation | null>(null);
   const { addReservation } = useReservations();
 
   if (!isOpen) return null;
 
-  const handleConfirm = async () => {
-    setIsConfirming(true);
+  const handleProceedToPayment = () => {
+    setStep("payment_method");
+  };
 
+  const handlePaymentMethodSelect = (method: PaymentMethod) => {
+    setPaymentMethod(method);
+    setStep("payment_form");
+  };
+
+  const handlePaymentSubmit = (details: string) => {
+    setPaymentDetails(details);
+    setStep("processing");
+  };
+
+  const handlePaymentComplete = async () => {
     try {
-      // Save reservation (works for both logged-in and guest users)
       const reservation = await addReservation({
         productId: product.id,
         productName: product.name,
@@ -47,20 +67,29 @@ export function ReservationModal({
         branchLng: branch.longitude,
         quantity: 1,
         pickupHours,
+        paymentMethod: paymentMethod || undefined,
+        paymentDetails: paymentDetails || undefined,
       });
 
       setConfirmedReservation(reservation);
+      setStep("success");
     } catch (error) {
       console.error("Error creating reservation:", error);
       alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
-    } finally {
-      setIsConfirming(false);
+      setStep("details");
     }
   };
 
   const handleClose = () => {
+    setStep("details");
+    setPaymentMethod(null);
+    setPaymentDetails("");
     setConfirmedReservation(null);
     onClose();
+  };
+
+  const handleBackToPaymentMethod = () => {
+    setStep("payment_method");
   };
 
   return (
@@ -76,7 +105,11 @@ export function ReservationModal({
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">
-            {confirmedReservation ? "จองสำเร็จ" : "จองสินค้า"}
+            {step === "success" ? "จองสำเร็จ" :
+             step === "processing" ? "กำลังดำเนินการ" :
+             step === "payment_form" ? "ชำระเงิน" :
+             step === "payment_method" ? "เลือกวิธีชำระเงิน" :
+             "จองสินค้า"}
           </h2>
           <button
             onClick={handleClose}
@@ -86,7 +119,7 @@ export function ReservationModal({
           </button>
         </div>
 
-        {confirmedReservation ? (
+        {step === "success" && confirmedReservation ? (
           /* Success State */
           <div className="p-6 text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -121,6 +154,43 @@ export function ReservationModal({
                 ดูรายการจอง
               </a>
             </div>
+          </div>
+        ) : step === "processing" ? (
+          /* Processing State */
+          <div className="p-6">
+            <PaymentProcessing onComplete={handlePaymentComplete} />
+          </div>
+        ) : step === "payment_form" && paymentMethod ? (
+          /* Payment Form State */
+          <div className="p-4 sm:p-6">
+            {paymentMethod === "credit_card" && (
+              <CreditCardForm
+                onSubmit={handlePaymentSubmit}
+                onBack={handleBackToPaymentMethod}
+              />
+            )}
+            {paymentMethod === "promptpay" && (
+              <PromptPayForm
+                amount={product.price}
+                onSubmit={handlePaymentSubmit}
+                onBack={handleBackToPaymentMethod}
+              />
+            )}
+            {paymentMethod === "mobile_banking" && (
+              <MobileBankingForm
+                amount={product.price}
+                onSubmit={handlePaymentSubmit}
+                onBack={handleBackToPaymentMethod}
+              />
+            )}
+          </div>
+        ) : step === "payment_method" ? (
+          /* Payment Method Selection */
+          <div className="p-4 sm:p-6">
+            <PaymentMethodSelector
+              selectedMethod={paymentMethod}
+              onSelect={handlePaymentMethodSelect}
+            />
           </div>
         ) : (
           /* Reservation Form */
@@ -177,11 +247,10 @@ export function ReservationModal({
                 ยกเลิก
               </button>
               <button
-                onClick={handleConfirm}
-                disabled={isConfirming}
-                className="flex-1 py-3 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleProceedToPayment}
+                className="flex-1 py-3 rounded-xl bg-gray-900 text-white font-medium hover:bg-gray-800 transition-colors"
               >
-                {isConfirming ? "กำลังจอง..." : "ยืนยันจอง"}
+                ดำเนินการต่อ
               </button>
             </div>
           </div>
