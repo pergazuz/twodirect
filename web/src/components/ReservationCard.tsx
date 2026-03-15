@@ -101,6 +101,19 @@ export function ReservationCard({ reservation, onCancel, onComplete }: Reservati
           </div>
         )}
 
+        {/* Created At (for history - non-pending) */}
+        {!isPending && (
+          <div className="text-xs text-gray-400 mb-3">
+            จองเมื่อ: {new Date(reservation.createdAt).toLocaleString("th-TH", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </div>
+        )}
+
         {/* Actions */}
         {isPending && (
           <div className="flex gap-2">
@@ -124,7 +137,35 @@ export function ReservationCard({ reservation, onCancel, onComplete }: Reservati
         {/* Completed/Expired info */}
         {reservation.status === "completed" && reservation.completedAt && (
           <p className="text-xs text-gray-400 text-center">
-            รับสินค้าเมื่อ {new Date(reservation.completedAt).toLocaleString("th-TH")}
+            รับสินค้าเมื่อ: {new Date(reservation.completedAt).toLocaleString("th-TH", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+        )}
+        {reservation.status === "cancelled" && reservation.cancelledAt && (
+          <p className="text-xs text-gray-400 text-center">
+            ยกเลิกเมื่อ: {new Date(reservation.cancelledAt).toLocaleString("th-TH", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+        )}
+        {reservation.status === "expired" && (
+          <p className="text-xs text-gray-400 text-center">
+            หมดเวลาเมื่อ: {new Date(reservation.pickupDeadline).toLocaleString("th-TH", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </p>
         )}
       </div>
