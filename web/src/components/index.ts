@@ -10,4 +10,6 @@ export { BannerCarousel, getBannersForStore } from "./BannerCarousel";
 export { ReservationModal } from "./ReservationModal";
 export { ReservationCard } from "./ReservationCard";
 export { PendingReservationBanner } from "./PendingReservationBanner";
+export { Header } from "./Header";
+export { Footer } from "./Footer";
 

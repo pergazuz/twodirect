@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { SearchBar, StoreSelector, BannerCarousel, PendingReservationBanner } from "@/components";
+import { SearchBar, StoreSelector, BannerCarousel, PendingReservationBanner, Footer } from "@/components";
 import { MapPin, Loader2, Navigation, Percent, Gift, Clock, ShoppingBag, User, LogIn } from "lucide-react";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { useReservations } from "@/hooks/useReservations";
@@ -214,11 +214,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-6 sm:py-8">
-        <div className="mx-auto max-w-lg px-4 text-center md:max-w-2xl">
-          <p className="text-sm text-gray-400">© 2026 TwoDirect</p>
-        </div>
-      </footer>
+      <Footer />
     </main>
   );
 }
