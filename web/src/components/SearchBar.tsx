@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 interface SearchBarProps {
   onSearch: (query: string) => void;
   onImageSearch?: (imageFile: File) => void;
+  searchedImageUrl?: string | null;
+  onClearImageSearch?: () => void;
   placeholder?: string;
   className?: string;
 }
@@ -14,6 +16,8 @@ interface SearchBarProps {
 export function SearchBar({
   onSearch,
   onImageSearch,
+  searchedImageUrl,
+  onClearImageSearch,
   placeholder = "ค้นหาสินค้า...",
   className
 }: SearchBarProps) {
@@ -176,14 +180,37 @@ export function SearchBar({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={placeholder}
-            className="w-full rounded-2xl border border-gray-200 bg-white py-4 pl-12 pr-14 text-base transition-all placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-0 shadow-sm"
+            placeholder={searchedImageUrl ? "เพิ่มคำค้นหา..." : placeholder}
+            className={cn(
+              "w-full rounded-2xl border border-gray-200 bg-white py-4 pr-14 text-base transition-all placeholder:text-gray-400 focus:border-gray-300 focus:outline-none focus:ring-0 shadow-sm",
+              searchedImageUrl ? "pl-[4.5rem]" : "pl-12"
+            )}
           />
 
-          {/* Search Icon */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-            <Search className="h-5 w-5 text-gray-400" strokeWidth={1.5} />
-          </div>
+          {/* Search Icon or Image Thumbnail */}
+          {searchedImageUrl ? (
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+              <div className="relative group">
+                <img
+                  src={searchedImageUrl}
+                  alt="ค้นหาด้วยรูปภาพ"
+                  className="h-9 w-9 rounded-xl object-cover border border-gray-200"
+                />
+                <button
+                  type="button"
+                  onClick={onClearImageSearch}
+                  className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-gray-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Clear image search"
+                >
+                  <X className="h-2.5 w-2.5" strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+              <Search className="h-5 w-5 text-gray-400" strokeWidth={1.5} />
+            </div>
+          )}
 
           {/* Clear Button */}
           {query && (

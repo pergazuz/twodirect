@@ -4,12 +4,13 @@ import Link from "next/link";
 import { MapPin, Loader2, Navigation, ShoppingBag, User, LogIn, Search } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useReservations } from "@/hooks/useReservations";
-import { useGeolocation } from "@/hooks/useGeolocation";
+import { useLocation } from "@/contexts/LocationContext";
 
 export function Header() {
   const { user, profile, isLoading: authLoading } = useAuth();
   const { pendingCount } = useReservations();
-  const { location, loading, error, permissionDenied, requestLocation, isDefault } = useGeolocation();
+  const { activeLocation: location, gpsLoading: loading, gpsError: error, permissionDenied, openPicker } = useLocation();
+  const isDefault = location.source === "gps" && location.lat === 13.7563;
 
   const getDisplayName = () => {
     if (loading) return "กำลังหา...";
@@ -39,7 +40,7 @@ export function Header() {
             </div>
             <div className="flex items-center gap-3">
               <button
-                onClick={requestLocation}
+                onClick={openPicker}
                 className="flex items-center gap-1.5 text-gray-300 hover:text-white transition-colors"
                 title={error || `ตำแหน่ง: ${location.name}`}
               >

@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SearchBar, StoreSelector, BannerCarousel, PendingReservationBanner, Footer } from "@/components";
 import { MapPin, Loader2, Navigation, Percent, Gift, Clock, ShoppingBag, User, LogIn } from "lucide-react";
-import { useGeolocation } from "@/hooks/useGeolocation";
+import { useLocation } from "@/contexts/LocationContext";
 import { useReservations } from "@/hooks/useReservations";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Home() {
   const router = useRouter();
-  const { location, loading, error, permissionDenied, requestLocation, isDefault } = useGeolocation();
+  const { activeLocation, gpsLoading: loading, gpsError: error, permissionDenied, openPicker } = useLocation();
+  const location = activeLocation;
   const { pendingCount } = useReservations();
   const { user, profile, isLoading: authLoading } = useAuth();
 
@@ -18,13 +19,25 @@ export default function Home() {
     router.push(`/search?q=${encodeURIComponent(query)}&lat=${location.lat}&lng=${location.lng}`);
   };
 
+  const handleImageSearch = (imageFile: File) => {
+    // Store the image in sessionStorage as base64 so the search page can pick it up
+    const reader = new FileReader();
+    reader.onload = () => {
+      sessionStorage.setItem("pendingImageSearch", reader.result as string);
+      router.push(`/search?image=pending&lat=${location.lat}&lng=${location.lng}`);
+    };
+    reader.readAsDataURL(imageFile);
+  };
+
   const handleStoreClick = (storeId: string) => {
     router.push(`/search?store=${storeId}&lat=${location.lat}&lng=${location.lng}`);
   };
 
   const handleLocationClick = () => {
-    requestLocation();
+    openPicker();
   };
+
+  const isDefault = activeLocation.source === "gps" && activeLocation.lat === 13.7563;
 
   const getDisplayName = () => {
     if (loading) return "กำลังหา...";
@@ -124,6 +137,7 @@ export default function Home() {
       <section className="mx-auto -mt-6 max-w-lg px-4 md:max-w-2xl lg:max-w-4xl">
         <SearchBar
           onSearch={handleSearch}
+          onImageSearch={handleImageSearch}
           placeholder="ค้นหาสินค้า..."
         />
       </section>

@@ -52,3 +52,49 @@ export async function fetchPromotions(): Promise<Promotion[]> {
   return res.json();
 }
 
+/**
+ * Hybrid search: text-first with embedding similarity fallback
+ */
+export async function searchProductsHybrid(
+  query: string,
+  lat?: number,
+  lng?: number,
+  radiusKm?: number,
+  storeChain?: string
+): Promise<SearchResult[]> {
+  const params = new URLSearchParams({ query });
+  if (lat !== undefined) params.set("lat", lat.toString());
+  if (lng !== undefined) params.set("lng", lng.toString());
+  if (radiusKm !== undefined) params.set("radius_km", radiusKm.toString());
+  if (storeChain) params.set("chain", storeChain);
+
+  // Always use Next.js API routes for hybrid search (not available on Rust backend)
+  const res = await fetch(`/api/products/search-hybrid?${params}`);
+  if (!res.ok) throw new Error("Failed to search products");
+  return res.json();
+}
+
+/**
+ * Image-based search using CLIP embeddings
+ */
+export async function searchProductsByImage(
+  imageFile: File,
+  lat?: number,
+  lng?: number,
+  radiusKm?: number
+): Promise<SearchResult[]> {
+  const formData = new FormData();
+  formData.append("image", imageFile);
+  if (lat !== undefined) formData.append("lat", lat.toString());
+  if (lng !== undefined) formData.append("lng", lng.toString());
+  if (radiusKm !== undefined) formData.append("radius_km", radiusKm.toString());
+
+  // Always use Next.js API routes for image search (not available on Rust backend)
+  const res = await fetch(`/api/products/search-image`, {
+    method: "POST",
+    body: formData,
+  });
+  if (!res.ok) throw new Error("Failed to search by image");
+  return res.json();
+}
+
