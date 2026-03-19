@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { SearchBar, ProductCard, BranchCard, MapView, getStoreName, BannerCarousel } from "@/components";
 import { SearchResult } from "@/types";
-import { searchProducts } from "@/lib/api";
+import { searchProducts, searchProductsByImage } from "@/lib/api";
 import { searchMockProducts, mockProducts } from "@/lib/mock-data";
 import { ArrowLeft, Map, List, Loader2, Search, Package, AlertCircle, X, Store, ShoppingCart, ExternalLink } from "lucide-react";
 import Link from "next/link";
@@ -82,8 +82,10 @@ function SearchContent() {
 
       if (USE_BACKEND && effectiveQuery) {
         // Use Rust backend API → Supabase
+        console.log(`🔍 [CLIENT] Calling searchProducts API with query: "${effectiveQuery}"`);
         searchProducts(effectiveQuery, lat, lng, 50, storeParam || undefined)
           .then((data) => {
+            console.log(`✅ [CLIENT] API returned ${data.length} results`);
             // Filter by store if specified
             let filteredData = data;
             if (storeParam) {
@@ -94,11 +96,12 @@ function SearchContent() {
                 )
               })).filter(result => result.branches.length > 0);
             }
+            console.log(`📊 [CLIENT] After filtering: ${filteredData.length} results`);
             setResults(filteredData);
             setLoading(false);
           })
           .catch((err) => {
-            console.error("API Error, falling back to mock data:", err);
+            console.error("❌ [CLIENT] API Error, falling back to mock data:", err);
             // Fallback to mock data if backend is not running
             const mockResults = searchMockProducts(effectiveQuery, lat, lng, 50, storeParam || undefined);
             setResults(mockResults);
@@ -131,6 +134,35 @@ function SearchContent() {
   const handleSearch = (newQuery: string) => {
     const storeQuery = storeParam ? `&store=${storeParam}` : "";
     router.push(`/search?q=${encodeURIComponent(newQuery)}&lat=${lat}&lng=${lng}${storeQuery}`);
+  };
+
+  const handleImageSearch = async (imageFile: File) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log("🖼️  Searching by image...");
+      const data = await searchProductsByImage(imageFile, lat, lng, 50);
+
+      // Filter by store if specified
+      let filteredData = data;
+      if (storeParam) {
+        filteredData = data.map(result => ({
+          ...result,
+          branches: result.branches.filter(b =>
+            (b.branch as any).chain === storeParam
+          )
+        })).filter(result => result.branches.length > 0);
+      }
+
+      setResults(filteredData);
+      console.log(`✨ Found ${filteredData.length} products from image search`);
+    } catch (err) {
+      console.error("Image search error:", err);
+      setError("ไม่สามารถค้นหาด้วยรูปภาพได้ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClearStore = () => {
@@ -167,7 +199,12 @@ function SearchContent() {
             >
               <ArrowLeft className="h-5 w-5 text-gray-600" strokeWidth={1.5} />
             </button>
-            <SearchBar onSearch={handleSearch} placeholder={searchQuery || "ค้นหาสินค้า..."} className="flex-1" />
+            <SearchBar
+              onSearch={handleSearch}
+              onImageSearch={handleImageSearch}
+              placeholder={searchQuery || "ค้นหาสินค้า..."}
+              className="flex-1"
+            />
           </div>
         </div>
       </header>

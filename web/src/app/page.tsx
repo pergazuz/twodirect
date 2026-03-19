@@ -18,6 +18,12 @@ export default function Home() {
     router.push(`/search?q=${encodeURIComponent(query)}&lat=${location.lat}&lng=${location.lng}`);
   };
 
+  const handleImageSearch = (imageFile: File) => {
+    // Navigate to search page which will handle the image search
+    router.push(`/search?lat=${location.lat}&lng=${location.lng}`);
+    // Note: The actual image search will be triggered by the SearchBar component on the search page
+  };
+
   const handleStoreClick = (storeId: string) => {
     router.push(`/search?store=${storeId}&lat=${location.lat}&lng=${location.lng}`);
   };
@@ -124,6 +130,7 @@ export default function Home() {
       <section className="mx-auto -mt-6 max-w-lg px-4 md:max-w-2xl lg:max-w-4xl">
         <SearchBar
           onSearch={handleSearch}
+          onImageSearch={handleImageSearch}
           placeholder="ค้นหาสินค้า..."
         />
       </section>

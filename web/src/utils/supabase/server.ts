@@ -2,10 +2,15 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const createClient = async () => {
   const cookieStore = await cookies();
+
+  // Use service role key if available (for API routes to bypass rate limits)
+  // Otherwise use anon key (for user-authenticated requests)
+  const supabaseKey = supabaseServiceKey || supabaseAnonKey;
 
   return createServerClient(supabaseUrl, supabaseKey, {
     cookies: {

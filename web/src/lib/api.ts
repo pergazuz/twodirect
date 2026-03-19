@@ -21,16 +21,39 @@ export async function searchProducts(
   lat?: number,
   lng?: number,
   radiusKm?: number,
-  storeChain?: string
+  storeChain?: string,
+  useEmbedding?: boolean
 ): Promise<SearchResult[]> {
   const params = new URLSearchParams({ query });
   if (lat !== undefined) params.set("lat", lat.toString());
   if (lng !== undefined) params.set("lng", lng.toString());
   if (radiusKm !== undefined) params.set("radius_km", radiusKm.toString());
   if (storeChain) params.set("chain", storeChain);
+  if (useEmbedding) params.set("use_embedding", "true");
 
   const res = await fetch(`${API_BASE}/api/products/search?${params}`);
   if (!res.ok) throw new Error("Failed to search products");
+  return res.json();
+}
+
+export async function searchProductsByImage(
+  imageFile: File,
+  lat?: number,
+  lng?: number,
+  radiusKm?: number
+): Promise<SearchResult[]> {
+  const formData = new FormData();
+  formData.append("image", imageFile);
+  if (lat !== undefined) formData.append("lat", lat.toString());
+  if (lng !== undefined) formData.append("lng", lng.toString());
+  if (radiusKm !== undefined) formData.append("radius_km", radiusKm.toString());
+
+  const res = await fetch(`${API_BASE}/api/products/search-by-image`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) throw new Error("Failed to search products by image");
   return res.json();
 }
 
