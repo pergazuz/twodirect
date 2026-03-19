@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const query = searchParams.get("query") || "";
     const lat = parseFloat(searchParams.get("lat") || "13.7563");
     const lng = parseFloat(searchParams.get("lng") || "100.5018");
-    const radiusKm = parseFloat(searchParams.get("radius_km") || "10");
+    // radius_km kept for sorting but no longer filters out results
 
     if (!query) {
       return NextResponse.json([]);
@@ -59,17 +59,15 @@ export async function GET(request: NextRequest) {
         const branch = branches?.find((b) => b.id === inv.branch_id);
         if (branch) {
           const distance = haversineDistance(lat, lng, branch.latitude, branch.longitude);
-          if (distance <= radiusKm) {
-            const promos = (promotions || []).filter(
-              (p) => !p.product_id || p.product_id === product.id
-            );
-            branchesWithStock.push({
-              branch,
-              quantity: inv.quantity,
-              distance_km: distance,
-              promotions: promos,
-            });
-          }
+          const promos = (promotions || []).filter(
+            (p) => !p.product_id || p.product_id === product.id
+          );
+          branchesWithStock.push({
+            branch,
+            quantity: inv.quantity,
+            distance_km: distance,
+            promotions: promos,
+          });
         }
       }
 

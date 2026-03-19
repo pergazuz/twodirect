@@ -45,3 +45,21 @@ export interface SearchResult {
   branches: BranchWithStock[];
 }
 
+export interface SavedAddress {
+  id: string;
+  label: string;
+  name: string;
+  fullAddress?: string;
+  lat: number;
+  lng: number;
+  icon: "home" | "briefcase" | "map-pin";
+}
+
+export interface ActiveLocation {
+  lat: number;
+  lng: number;
+  name: string;
+  source: "gps" | "saved" | "search";
+  savedAddressId?: string;
+}
+

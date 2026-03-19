@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { SearchBar, ProductCard, BranchCard, MapView, getStoreName, BannerCarousel } from "@/components";
 import { SearchResult } from "@/types";
-import { searchProducts } from "@/lib/api";
+import { searchProducts, searchProductsHybrid, searchProductsByImage } from "@/lib/api";
 import { searchMockProducts, mockProducts } from "@/lib/mock-data";
 import { ArrowLeft, Map, List, Loader2, Search, Package, AlertCircle, X, Store, ShoppingCart, ExternalLink } from "lucide-react";
 import Link from "next/link";
@@ -60,6 +60,7 @@ function SearchContent() {
   const queryParam = searchParams.get("q") || "";
   const categoryParam = searchParams.get("category") || "";
   const storeParam = searchParams.get("store") || "";
+  const imageParam = searchParams.get("image") || "";
   const searchQuery = queryParam || categorySearchTerms[categoryParam] || categoryParam;
 
   const lat = parseFloat(searchParams.get("lat") || "13.7563");
@@ -70,6 +71,50 @@ function SearchContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [searchedImage, setSearchedImage] = useState<string | null>(null);
+
+  const handleImageSearch = async (imageFile: File) => {
+    setLoading(true);
+    setError(null);
+    // Show the searched image as preview
+    const imageUrl = URL.createObjectURL(imageFile);
+    setSearchedImage(imageUrl);
+    try {
+      const data = await searchProductsByImage(imageFile, lat, lng, 50);
+      let filteredData = data;
+      if (storeParam) {
+        filteredData = data
+          .map((result) => ({
+            ...result,
+            branches: result.branches.filter((b) => (b.branch as any).chain === storeParam),
+          }))
+          .filter((result) => result.branches.length > 0);
+      }
+      setResults(filteredData);
+    } catch (err) {
+      console.error("Image search error:", err);
+      setError("ค้นหาด้วยรูปภาพไม่สำเร็จ - ลองใช้คำค้นหาแทน");
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle pending image search from home page
+  useEffect(() => {
+    if (imageParam === "pending") {
+      const dataUrl = sessionStorage.getItem("pendingImageSearch");
+      if (dataUrl) {
+        sessionStorage.removeItem("pendingImageSearch");
+        fetch(dataUrl)
+          .then((res) => res.blob())
+          .then((blob) => {
+            const file = new File([blob], "search-image.jpg", { type: blob.type });
+            handleImageSearch(file);
+          });
+      }
+    }
+  }, [imageParam]);
 
   useEffect(() => {
     // Search if we have a query, category, or store filter
@@ -81,8 +126,12 @@ function SearchContent() {
       const effectiveQuery = searchQuery || "";
 
       if (USE_BACKEND && effectiveQuery) {
-        // Use Rust backend API → Supabase
-        searchProducts(effectiveQuery, lat, lng, 50, storeParam || undefined)
+        // Use hybrid search: text-first, embedding fallback
+        searchProductsHybrid(effectiveQuery, lat, lng, 50, storeParam || undefined)
+          .catch(() => {
+            // Fallback to basic text search if hybrid endpoint unavailable
+            return searchProducts(effectiveQuery, lat, lng, 50, storeParam || undefined);
+          })
           .then((data) => {
             // Filter by store if specified
             let filteredData = data;
@@ -129,6 +178,7 @@ function SearchContent() {
   }, [searchQuery, categoryParam, storeParam, lat, lng]);
 
   const handleSearch = (newQuery: string) => {
+    setSearchedImage(null);
     const storeQuery = storeParam ? `&store=${storeParam}` : "";
     router.push(`/search?q=${encodeURIComponent(newQuery)}&lat=${lat}&lng=${lng}${storeQuery}`);
   };
@@ -167,7 +217,7 @@ function SearchContent() {
             >
               <ArrowLeft className="h-5 w-5 text-gray-600" strokeWidth={1.5} />
             </button>
-            <SearchBar onSearch={handleSearch} placeholder={searchQuery || "ค้นหาสินค้า..."} className="flex-1" />
+            <SearchBar onSearch={handleSearch} onImageSearch={handleImageSearch} searchedImageUrl={searchedImage} onClearImageSearch={() => setSearchedImage(null)} placeholder={searchQuery || "ค้นหาสินค้า..."} className="flex-1" />
           </div>
         </div>
       </header>
