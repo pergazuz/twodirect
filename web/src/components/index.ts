@@ -13,4 +13,5 @@ export { PendingReservationBanner } from "./PendingReservationBanner";
 export { Header } from "./Header";
 export { Footer } from "./Footer";
 export { LocationPicker } from "./LocationPicker";
+export { ChatBot } from "./ChatBot";
 

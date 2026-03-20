@@ -7,6 +7,17 @@ import { ArrowLeft, LogOut, User, Clock, Heart, ShoppingBag, Search, ChevronRigh
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase, SearchHistoryRecord, ReservationRecord } from "@/lib/supabase";
 
+// Helper function to get display name
+function getDisplayName(fullName: string | null | undefined, email: string | null | undefined): string {
+  if (fullName) return fullName;
+  if (email) {
+    // Extract username from email (before @)
+    const username = email.split('@')[0];
+    return username;
+  }
+  return "ผู้ใช้";
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const { user, profile, isLoading, signOut } = useAuth();
@@ -109,9 +120,9 @@ export default function ProfilePage() {
             )}
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
-                {profile?.full_name || "ผู้ใช้"}
+                {getDisplayName(profile?.full_name, profile?.email || user?.email)}
               </h2>
-              <p className="text-sm text-gray-500">{profile?.email || user.email}</p>
+              <p className="text-sm text-gray-500">{profile?.email || user?.email}</p>
               {profile?.provider && (
                 <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                   {profile.provider === "google" ? "Google" : profile.provider}

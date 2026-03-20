@@ -42,8 +42,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setSession(currentSession);
           setUser(currentSession.user);
 
-          const profileData = await getProfile(currentSession.user.id);
+          let profileData = await getProfile(currentSession.user.id);
           if (mounted) {
+            const meta = currentSession.user.user_metadata;
+            if (!profileData) {
+              // No profile row — build from user_metadata
+              profileData = {
+                id: currentSession.user.id,
+                email: currentSession.user.email || null,
+                full_name: meta?.full_name || meta?.name || null,
+                avatar_url: meta?.avatar_url || meta?.picture || null,
+                provider: currentSession.user.app_metadata?.provider || null,
+                created_at: currentSession.user.created_at,
+                updated_at: currentSession.user.updated_at || currentSession.user.created_at,
+              };
+            } else {
+              // Update profile with fresh data from metadata if missing
+              const freshAvatar = meta?.avatar_url || meta?.picture;
+              const freshName = meta?.full_name || meta?.name;
+
+              if (freshAvatar && freshAvatar !== profileData.avatar_url) {
+                profileData.avatar_url = freshAvatar;
+              }
+              if (freshName && !profileData.full_name) {
+                profileData.full_name = freshName;
+              }
+            }
             setProfile(profileData);
           }
         }
@@ -68,8 +92,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (newSession?.user) {
           setTimeout(async () => {
             if (!mounted) return;
-            const profileData = await getProfile(newSession.user.id);
+            let profileData = await getProfile(newSession.user.id);
             if (mounted) {
+              const meta = newSession.user.user_metadata;
+              if (!profileData) {
+                profileData = {
+                  id: newSession.user.id,
+                  email: newSession.user.email || null,
+                  full_name: meta?.full_name || meta?.name || null,
+                  avatar_url: meta?.avatar_url || meta?.picture || null,
+                  provider: newSession.user.app_metadata?.provider || null,
+                  created_at: newSession.user.created_at,
+                  updated_at: newSession.user.updated_at || newSession.user.created_at,
+                };
+              } else {
+                // Update profile with fresh data from metadata if missing
+                const freshAvatar = meta?.avatar_url || meta?.picture;
+                const freshName = meta?.full_name || meta?.name;
+
+                if (freshAvatar && freshAvatar !== profileData.avatar_url) {
+                  profileData.avatar_url = freshAvatar;
+                }
+                if (freshName && !profileData.full_name) {
+                  profileData.full_name = freshName;
+                }
+              }
               setProfile(profileData);
             }
           }, 0);

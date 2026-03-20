@@ -6,6 +6,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useReservations } from "@/hooks/useReservations";
 import { useLocation } from "@/contexts/LocationContext";
 
+// Helper function to get user display name
+function getUserDisplayName(fullName: string | null | undefined, email: string | null | undefined): string {
+  if (fullName) return fullName;
+  if (email) {
+    const username = email.split('@')[0];
+    return username;
+  }
+  return "บัญชี";
+}
+
 export function Header() {
   const { user, profile, isLoading: authLoading } = useAuth();
   const { pendingCount } = useReservations();
@@ -126,14 +136,17 @@ export function Header() {
                       src={profile.avatar_url}
                       alt={profile.full_name || "Profile"}
                       className="h-8 w-8 rounded-full object-cover border-2 border-gray-200"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                      }}
                     />
-                  ) : (
-                    <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="h-4 w-4 text-gray-600" />
-                    </div>
-                  )}
+                  ) : null}
+                  <div className={`h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center ${profile?.avatar_url ? "hidden" : ""}`}>
+                    <User className="h-4 w-4 text-gray-600" />
+                  </div>
                   <span className="hidden lg:inline text-sm font-medium text-gray-700">
-                    {profile?.full_name || "บัญชี"}
+                    {getUserDisplayName(profile?.full_name, profile?.email || user?.email)}
                   </span>
                 </Link>
               ) : (
