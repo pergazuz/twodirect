@@ -8,6 +8,7 @@ import { MapPin, Clock, Navigation, ShoppingBag } from "lucide-react";
 import { PromoBadge } from "./PromoBadge";
 import { ReservationModal } from "./ReservationModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "@/contexts/LocationContext";
 
 interface BranchCardProps {
   branchWithStock: BranchWithStock;
@@ -21,9 +22,10 @@ export function BranchCard({ branchWithStock, product, onNavigate, onReserve }: 
   const [showReservationModal, setShowReservationModal] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
+  const { activeLocation } = useLocation();
 
   const handleNavigate = () => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${branch.latitude},${branch.longitude}`;
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${activeLocation.lat},${activeLocation.lng}&destination=${branch.latitude},${branch.longitude}`;
     window.open(url, "_blank");
     onNavigate?.(branchWithStock);
   };
