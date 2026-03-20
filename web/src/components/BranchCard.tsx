@@ -32,8 +32,9 @@ export function BranchCard({ branchWithStock, product, onNavigate, onReserve }: 
 
   const handleReserve = () => {
     if (!user) {
-      // Redirect to login if not logged in
-      router.push("/login");
+      // Redirect to login, then back to current page
+      const currentPath = window.location.pathname + window.location.search;
+      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
       return;
     }
     setShowReservationModal(true);

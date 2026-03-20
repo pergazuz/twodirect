@@ -61,6 +61,7 @@ function SearchContent() {
   const categoryParam = searchParams.get("category") || "";
   const storeParam = searchParams.get("store") || "";
   const imageParam = searchParams.get("image") || "";
+  const productParam = searchParams.get("product") || "";
   const searchQuery = queryParam || categorySearchTerms[categoryParam] || categoryParam;
 
   const lat = parseFloat(searchParams.get("lat") || "13.7563");
@@ -177,6 +178,16 @@ function SearchContent() {
     }
   }, [searchQuery, categoryParam, storeParam, lat, lng]);
 
+  // Auto-select product from URL param (e.g. after login redirect)
+  useEffect(() => {
+    if (productParam && results.length > 0 && !selectedProduct) {
+      const match = results.find((r) => r.product.id === productParam);
+      if (match) {
+        setSelectedProduct(match);
+      }
+    }
+  }, [productParam, results]);
+
   const handleSearch = (newQuery: string) => {
     setSearchedImage(null);
     const storeQuery = storeParam ? `&store=${storeParam}` : "";
@@ -194,11 +205,19 @@ function SearchContent() {
 
   const handleProductClick = (result: SearchResult) => {
     setSelectedProduct(result);
+    // Add product ID to URL so it persists across navigation (e.g. login redirect)
+    const params = new URLSearchParams(window.location.search);
+    params.set("product", result.product.id);
+    router.replace(`/search?${params.toString()}`, { scroll: false });
   };
 
   const handleBack = () => {
     if (selectedProduct) {
       setSelectedProduct(null);
+      // Remove product param from URL
+      const params = new URLSearchParams(window.location.search);
+      params.delete("product");
+      router.replace(`/search?${params.toString()}`, { scroll: false });
     } else {
       router.push("/");
     }

@@ -26,9 +26,11 @@ function LoginContent() {
     }
   }, [searchParams]);
 
+  const redirectTo = searchParams.get("redirect") || "/";
+
   // Redirect if already logged in
   if (user && !isLoading) {
-    router.push("/");
+    router.push(redirectTo);
     return null;
   }
 
@@ -36,7 +38,7 @@ function LoginContent() {
     try {
       setError("");
       setGoogleLoading(true);
-      await signInWithGoogle();
+      await signInWithGoogle(redirectTo);
     } catch (err: any) {
       setGoogleLoading(false);
       setError(err.message || "เกิดข้อผิดพลาดในการเข้าสู่ระบบด้วย Google");
@@ -62,7 +64,7 @@ function LoginContent() {
         if (error) {
           setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
         } else {
-          router.push("/");
+          router.push(redirectTo);
         }
       }
     } catch {
