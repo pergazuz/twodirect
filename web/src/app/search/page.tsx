@@ -8,6 +8,7 @@ import { searchProducts, searchProductsHybrid, searchProductsByImage } from "@/l
 import { searchMockProducts, mockProducts } from "@/lib/mock-data";
 import { ArrowLeft, Map, List, Loader2, Search, Package, AlertCircle, X, Store, ShoppingCart, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { useLocation } from "@/contexts/LocationContext";
 
 // Store online shopping URLs
 const STORE_ONLINE_URLS: Record<string, { name: string; getUrl: (query: string) => string }> = {
@@ -64,8 +65,9 @@ function SearchContent() {
   const productParam = searchParams.get("product") || "";
   const searchQuery = queryParam || categorySearchTerms[categoryParam] || categoryParam;
 
-  const lat = parseFloat(searchParams.get("lat") || "13.7563");
-  const lng = parseFloat(searchParams.get("lng") || "100.5018");
+  const { activeLocation } = useLocation();
+  const lat = activeLocation.lat;
+  const lng = activeLocation.lng;
 
   const [results, setResults] = useState<SearchResult[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<SearchResult | null>(null);

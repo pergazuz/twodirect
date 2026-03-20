@@ -63,3 +63,35 @@ export interface ActiveLocation {
   savedAddressId?: string;
 }
 
+export interface Coupon {
+  id: string;
+  code: string;
+  title: string;
+  title_th: string;
+  description?: string;
+  description_th?: string;
+  discount_type: "percent" | "fixed";
+  discount_value: number;
+  min_purchase: number;
+  max_discount?: number;
+  usage_limit?: number;
+  usage_count: number;
+  per_user_limit: number;
+  valid_from: string;
+  valid_until: string;
+  is_active: boolean;
+  category?: string;
+  image_url?: string;
+}
+
+export interface UserCoupon {
+  id: string;
+  user_id: string;
+  coupon_id: string;
+  is_used: boolean;
+  used_at?: string;
+  reservation_id?: string;
+  collected_at: string;
+  coupon?: Coupon;
+}
+

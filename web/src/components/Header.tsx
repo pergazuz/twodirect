@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, Loader2, Navigation, ShoppingBag, User, LogIn, Search } from "lucide-react";
+import { MapPin, Loader2, Navigation, ShoppingBag, User, LogIn, Search, Ticket } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useReservations } from "@/hooks/useReservations";
+import { useCoupons } from "@/hooks/useCoupons";
 import { useLocation } from "@/contexts/LocationContext";
 
 // Helper function to get user display name
@@ -19,6 +20,7 @@ function getUserDisplayName(fullName: string | null | undefined, email: string |
 export function Header() {
   const { user, profile, isLoading: authLoading } = useAuth();
   const { pendingCount } = useReservations();
+  const { availableCoupons } = useCoupons();
   const { activeLocation: location, gpsLoading: loading, gpsError: error, permissionDenied, openPicker } = useLocation();
   const isDefault = location.source === "gps" && location.lat === 13.7563;
 
@@ -90,6 +92,9 @@ export function Header() {
               <Link href="/search" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
                 ค้นหาสินค้า
               </Link>
+              <Link href="/coupons" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
+                คูปอง
+              </Link>
               <Link href="/reservations" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
                 รายการจอง
               </Link>
@@ -104,6 +109,20 @@ export function Header() {
                 title="ค้นหา"
               >
                 <Search className="h-5 w-5 text-gray-600" />
+              </Link>
+
+              {/* Coupons */}
+              <Link
+                href="/coupons"
+                className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+                title="คูปอง"
+              >
+                <Ticket className="h-5 w-5 text-gray-600" />
+                {availableCoupons.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    {availableCoupons.length > 9 ? "9+" : availableCoupons.length}
+                  </span>
+                )}
               </Link>
 
               {/* Reservations */}

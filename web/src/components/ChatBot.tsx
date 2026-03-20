@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "@/contexts/LocationContext";
 
 // ---- Types ----
 
@@ -158,8 +159,8 @@ function ChatProductCard({ product }: { product: ChatProduct }) {
 const QUICK_PROMPTS = [
   "แนะนำเครื่องดื่มเย็นๆ",
   "มีอะไรกินบ้าง?",
+  "สาขาใกล้ฉัน",
   "สินค้าลดราคา",
-  "ของว่างทานเล่น",
 ];
 
 // ---- Main Component ----
@@ -169,6 +170,7 @@ type ChatView = "chat" | "sessions";
 export function ChatBot() {
   const { user } = useAuth();
   const userId = user?.id ?? null;
+  const { activeLocation } = useLocation();
 
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<ChatView>("chat");
@@ -294,6 +296,8 @@ export function ChatBot() {
             role: m.role,
             content: m.content,
           })),
+          lat: activeLocation.lat,
+          lng: activeLocation.lng,
         }),
       });
 

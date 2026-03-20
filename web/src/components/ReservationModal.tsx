@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { X, Clock, MapPin, AlertTriangle, ShoppingBag, Check } from "lucide-react";
-import { Product, Branch } from "@/types";
+import { Product, Branch, UserCoupon } from "@/types";
 import { useReservations, Reservation, PaymentMethod } from "@/hooks/useReservations";
+import { useCoupons } from "@/hooks/useCoupons";
 import { PaymentMethodSelector } from "./payment/PaymentMethodSelector";
 import { CreditCardForm } from "./payment/CreditCardForm";
 import { PromptPayForm } from "./payment/PromptPayForm";
 import { MobileBankingForm } from "./payment/MobileBankingForm";
 import { PaymentProcessing } from "./payment/PaymentProcessing";
+import { CouponSelector } from "./payment/CouponSelector";
 
 interface ReservationModalProps {
   isOpen: boolean;
@@ -33,7 +35,12 @@ export function ReservationModal({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [paymentDetails, setPaymentDetails] = useState<string>("");
   const [confirmedReservation, setConfirmedReservation] = useState<Reservation | null>(null);
+  const [selectedCoupon, setSelectedCoupon] = useState<UserCoupon | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
   const { addReservation } = useReservations();
+  const { useCoupon } = useCoupons();
+
+  const finalPrice = Math.max(0, product.price - couponDiscount);
 
   if (!isOpen) return null;
 
@@ -57,7 +64,7 @@ export function ReservationModal({
         productId: product.id,
         productName: product.name,
         productNameTh: product.name_th,
-        productPrice: product.price,
+        productPrice: finalPrice,
         productImage: product.image_url,
         branchId: branch.id,
         branchName: branch.name,
@@ -70,6 +77,11 @@ export function ReservationModal({
         paymentMethod: paymentMethod || undefined,
         paymentDetails: paymentDetails || undefined,
       });
+
+      // Mark coupon as used
+      if (selectedCoupon) {
+        await useCoupon(selectedCoupon.id, reservation.id);
+      }
 
       setConfirmedReservation(reservation);
       setStep("success");
@@ -85,6 +97,8 @@ export function ReservationModal({
     setPaymentMethod(null);
     setPaymentDetails("");
     setConfirmedReservation(null);
+    setSelectedCoupon(null);
+    setCouponDiscount(0);
     onClose();
   };
 
@@ -171,14 +185,14 @@ export function ReservationModal({
             )}
             {paymentMethod === "promptpay" && (
               <PromptPayForm
-                amount={product.price}
+                amount={finalPrice}
                 onSubmit={handlePaymentSubmit}
                 onBack={handleBackToPaymentMethod}
               />
             )}
             {paymentMethod === "mobile_banking" && (
               <MobileBankingForm
-                amount={product.price}
+                amount={finalPrice}
                 onSubmit={handlePaymentSubmit}
                 onBack={handleBackToPaymentMethod}
               />
@@ -203,9 +217,31 @@ export function ReservationModal({
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-900 truncate">{product.name_th}</p>
                 <p className="text-sm text-gray-500">{product.name}</p>
-                <p className="text-lg font-semibold text-gray-900 mt-1">฿{product.price}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  {couponDiscount > 0 ? (
+                    <>
+                      <p className="text-lg font-semibold text-green-600">฿{finalPrice}</p>
+                      <p className="text-sm text-gray-400 line-through">฿{product.price}</p>
+                      <span className="text-xs text-red-500 bg-red-50 px-1.5 py-0.5 rounded-full font-medium">
+                        -฿{couponDiscount.toFixed(0)}
+                      </span>
+                    </>
+                  ) : (
+                    <p className="text-lg font-semibold text-gray-900">฿{product.price}</p>
+                  )}
+                </div>
               </div>
             </div>
+
+            {/* Coupon Selector */}
+            <CouponSelector
+              productPrice={product.price}
+              selectedCoupon={selectedCoupon}
+              onSelect={(uc, discount) => {
+                setSelectedCoupon(uc);
+                setCouponDiscount(discount);
+              }}
+            />
 
             {/* Branch Info */}
             <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl mb-4">

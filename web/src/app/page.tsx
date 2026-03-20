@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { SearchBar, StoreSelector, BannerCarousel, PendingReservationBanner, Footer } from "@/components";
-import { MapPin, Loader2, Navigation, Percent, Gift, Clock, ShoppingBag, User, LogIn } from "lucide-react";
+import { MapPin, Loader2, Navigation, Percent, Gift, Clock, ShoppingBag, User, LogIn, Ticket } from "lucide-react";
 import { useLocation } from "@/contexts/LocationContext";
 import { useReservations } from "@/hooks/useReservations";
 import { useAuth } from "@/contexts/AuthContext";
@@ -166,6 +166,27 @@ export default function Home() {
           โปรโมชั่น
         </h2>
         <div className="space-y-3">
+          {/* Coupon Card */}
+          <Link
+            href="/coupons"
+            className="w-full rounded-2xl bg-white border border-gray-100 p-4 sm:p-5 text-left transition-all hover:bg-gray-50 active:scale-[0.99] flex items-center justify-between"
+          >
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="bg-red-500 text-white text-xs font-medium px-2.5 py-1 rounded-full">
+                  คูปอง
+                </span>
+              </div>
+              <p className="text-gray-900 font-semibold text-lg sm:text-xl">คูปองส่วนลด</p>
+              <p className="text-gray-400 text-sm mt-1">เก็บคูปองฟรี ใช้ลดราคาเมื่อจอง</p>
+            </div>
+            <div className="flex-shrink-0 ml-4">
+              <div className="bg-red-50 rounded-2xl p-3 sm:p-4">
+                <Ticket className="h-7 w-7 sm:h-8 sm:w-8 text-red-500" strokeWidth={1.5} />
+              </div>
+            </div>
+          </Link>
+
           {/* Main Promo Card */}
           <button
             onClick={() => handleSearch("โปรโมชั่น")}

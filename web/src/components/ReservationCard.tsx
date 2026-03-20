@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Clock, MapPin, Navigation, X, Package, CheckCircle, XCircle, AlertCircle, CreditCard, QrCode, Smartphone } from "lucide-react";
 import { Reservation, ReservationStatus, PaymentMethod } from "@/hooks/useReservations";
+import { useLocation } from "@/contexts/LocationContext";
 
 interface ReservationCardProps {
   reservation: Reservation;
@@ -47,6 +48,7 @@ function getPaymentMethodDisplay(method?: PaymentMethod): { label: string; icon:
 
 export function ReservationCard({ reservation, onCancel, onComplete }: ReservationCardProps) {
   const [timeRemaining, setTimeRemaining] = useState(() => formatTimeRemaining(reservation.pickupDeadline));
+  const { activeLocation } = useLocation();
   const status = statusConfig[reservation.status];
   const StatusIcon = status.icon;
   const isPending = reservation.status === "pending";
@@ -63,7 +65,7 @@ export function ReservationCard({ reservation, onCancel, onComplete }: Reservati
   }, [isPending, reservation.pickupDeadline]);
 
   const handleNavigate = () => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${reservation.branchLat},${reservation.branchLng}`;
+    const url = `https://www.google.com/maps/dir/?api=1&origin=${activeLocation.lat},${activeLocation.lng}&destination=${reservation.branchLat},${reservation.branchLng}`;
     window.open(url, "_blank");
   };
 
