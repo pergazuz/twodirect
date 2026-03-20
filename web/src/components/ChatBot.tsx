@@ -55,7 +55,7 @@ interface ChatSession {
 // ---- Storage helpers ----
 
 const STORAGE_PREFIX = "twodirect_sessions_";
-const BOT_NAME = "น้องใด";
+const BOT_NAME = "NongDaiDai";
 
 function getStorageKey(userId: string | null): string {
   return `${STORAGE_PREFIX}${userId || "guest"}`;
