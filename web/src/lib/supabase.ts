@@ -111,7 +111,10 @@ export async function getProfile(userId: string): Promise<Profile | null> {
     .single();
 
   if (error) {
-    console.error("Error fetching profile:", error);
+    // PGRST116 = no rows found — expected when profiles table is empty
+    if (error.code !== "PGRST116") {
+      console.error("Error fetching profile:", error);
+    }
     return null;
   }
   return data;
