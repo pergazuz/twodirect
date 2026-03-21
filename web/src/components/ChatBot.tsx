@@ -18,6 +18,7 @@ import {
   Plus,
   History,
   MessageSquare,
+  LogIn,
 } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -168,7 +169,7 @@ const QUICK_PROMPTS = [
 type ChatView = "chat" | "sessions";
 
 export function ChatBot() {
-  const { user } = useAuth();
+  const { user, signInWithGoogle } = useAuth();
   const userId = user?.id ?? null;
   const { activeLocation } = useLocation();
 
@@ -427,8 +428,30 @@ export function ChatBot() {
             </div>
           </div>
 
+          {/* ---- Login Required View ---- */}
+          {!user && (
+            <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 mb-4">
+                <LogIn className="h-7 w-7 text-gray-400" />
+              </div>
+              <h4 className="text-base font-semibold text-gray-900 mb-1">
+                กรุณาเข้าสู่ระบบ
+              </h4>
+              <p className="text-sm text-gray-500 text-center mb-6">
+                เข้าสู่ระบบเพื่อเริ่มแชทกับ {BOT_NAME}
+              </p>
+              <button
+                onClick={() => signInWithGoogle()}
+                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
+              >
+                <LogIn className="h-4 w-4" />
+                เข้าสู่ระบบด้วย Google
+              </button>
+            </div>
+          )}
+
           {/* ---- Sessions List View ---- */}
-          {view === "sessions" && (
+          {user && view === "sessions" && (
             <div className="flex-1 overflow-y-auto">
               {/* New Chat Button */}
               <button
@@ -508,7 +531,7 @@ export function ChatBot() {
           )}
 
           {/* ---- Chat View ---- */}
-          {view === "chat" && (
+          {user && view === "chat" && (
             <>
               {/* Messages */}
               <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
