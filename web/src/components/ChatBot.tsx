@@ -89,10 +89,11 @@ function createSession(): ChatSession {
 
 // ---- Product Card ----
 
-function ChatProductCard({ product }: { product: ChatProduct }) {
+function ChatProductCard({ product, onNavigate }: { product: ChatProduct; onNavigate?: () => void }) {
   const router = useRouter();
 
   const handleClick = () => {
+    onNavigate?.();
     router.push(
       `/search?q=${encodeURIComponent(product.name_th)}&product=${product.id}`
     );
@@ -588,6 +589,7 @@ export function ChatBot() {
                             <ChatProductCard
                               key={product.id}
                               product={product}
+                              onNavigate={() => { if (window.innerWidth < 640) setIsOpen(false); }}
                             />
                           ))}
                         </div>
