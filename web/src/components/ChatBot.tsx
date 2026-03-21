@@ -169,7 +169,7 @@ const QUICK_PROMPTS = [
 type ChatView = "chat" | "sessions";
 
 export function ChatBot() {
-  const { user, signInWithGoogle } = useAuth();
+  const { user } = useAuth();
   const userId = user?.id ?? null;
   const { activeLocation } = useLocation();
 
@@ -440,13 +440,13 @@ export function ChatBot() {
               <p className="text-sm text-gray-500 text-center mb-6">
                 เข้าสู่ระบบเพื่อเริ่มแชทกับ {BOT_NAME}
               </p>
-              <button
-                onClick={() => signInWithGoogle()}
+              <a
+                href="/login"
                 className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-gray-800 transition-colors"
               >
                 <LogIn className="h-4 w-4" />
-                เข้าสู่ระบบด้วย Google
-              </button>
+                เข้าสู่ระบบ
+              </a>
             </div>
           )}
 
