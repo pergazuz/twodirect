@@ -2,8 +2,9 @@
 
 import { SearchResult } from "@/types";
 import { formatPrice } from "@/lib/utils";
-import { Store, ChevronRight, Package } from "lucide-react";
+import { Store, ChevronRight, Package, Tag } from "lucide-react";
 import { PromoBadge } from "./PromoBadge";
+import { getPriceRange, getStorePrices } from "@/lib/mock-data";
 
 interface ProductCardProps {
   result: SearchResult;
@@ -12,11 +13,13 @@ interface ProductCardProps {
 
 export function ProductCard({ result, onClick }: ProductCardProps) {
   const { product, branches } = result;
-  const totalStock = branches.reduce((sum, b) => sum + b.quantity, 0);
   const nearestBranch = branches[0];
   const hasExclusivePromo = branches.some((b) =>
     b.promotions.some((p) => p.is_twodirect_exclusive)
   );
+  const priceRange = getPriceRange(product.id);
+  const storePrices = getStorePrices(product.id);
+  const storeCount = storePrices.filter(s => s.in_stock).length;
 
   return (
     <div
@@ -50,27 +53,49 @@ export function ProductCard({ result, onClick }: ProductCardProps) {
               </h3>
               <p className="text-xs text-gray-400 mt-0.5 sm:text-sm">{product.name}</p>
             </div>
-            <span className="text-sm font-semibold text-gray-900 flex-shrink-0 sm:text-base">
-              {formatPrice(product.price)}
-            </span>
+            <div className="text-right flex-shrink-0">
+              {priceRange && priceRange.min !== priceRange.max ? (
+                <>
+                  <span className="text-sm font-bold text-gray-900 sm:text-base">
+                    {formatPrice(priceRange.min)} - {formatPrice(priceRange.max)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-sm font-semibold text-gray-900 sm:text-base">
+                  {formatPrice(product.price)}
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 sm:text-sm">
-            <div className="flex items-center gap-1.5">
+          <div className="mt-2.5 flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 sm:text-sm">
               <Store className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               <span>
                 <span className="font-medium text-gray-700">{branches.length}</span> สาขา
               </span>
             </div>
             {nearestBranch && (
-              <span className="text-gray-400">
+              <span className="text-xs text-gray-400 sm:text-sm">
                 {nearestBranch.distance_km} km
               </span>
             )}
           </div>
 
+          {/* Price comparison badge */}
+          {storeCount > 1 && (
+            <div className="mt-2">
+              <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-gray-100 text-gray-600">
+                <Tag className="h-3 w-3" strokeWidth={2} />
+                <span className="text-[10px] font-medium sm:text-xs">
+                  เปรียบเทียบราคา ({storeCount} ร้าน)
+                </span>
+              </div>
+            </div>
+          )}
+
           {hasExclusivePromo && (
-            <div className="mt-2.5">
+            <div className="mt-2">
               <PromoBadge
                 promotion={{
                   id: "exclusive",

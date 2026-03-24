@@ -9,6 +9,17 @@ export interface Product {
   tags?: string[];
 }
 
+export interface StorePrice {
+  store_id: string;
+  store_name: string;
+  store_name_th: string;
+  price: number;
+  unit?: string;
+  in_stock: boolean;
+  branch_count: number;
+  logo_url?: string;
+}
+
 export interface Branch {
   id: string;
   name: string;

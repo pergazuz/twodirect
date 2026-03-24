@@ -3,12 +3,71 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
 import { SearchBar, ProductCard, BranchCard, MapView, getStoreName, BannerCarousel } from "@/components";
-import { SearchResult } from "@/types";
+import { PriceComparison } from "@/components/PriceComparison";
+import { SearchResult, StorePrice, BranchWithStock } from "@/types";
 import { searchProducts, searchProductsHybrid, searchProductsByImage } from "@/lib/api";
-import { searchMockProducts, mockProducts } from "@/lib/mock-data";
-import { ArrowLeft, Map, List, Loader2, Search, Package, AlertCircle, X, Store, ShoppingCart, ExternalLink } from "lucide-react";
+import { searchMockProducts, mockProducts, getStorePrices, getPriceRange } from "@/lib/mock-data";
+import { formatPrice } from "@/lib/utils";
+import { ArrowLeft, Map, List, Loader2, Search, Package, AlertCircle, X, Store, TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { useLocation } from "@/contexts/LocationContext";
+
+// Build StorePrice[] from real branch data (instead of relying on mock data)
+// Build store prices from branch data, using mock pricing when available
+function getEffectiveStorePrices(productId: string, branches: BranchWithStock[], productPrice: number): StorePrice[] {
+  const STORE_LOGO_URL = "https://ncjszzjzluhbqavalnty.supabase.co/storage/v1/object/public/stores";
+  const STORE_META: Record<string, { name: string; name_th: string; logo: string }> = {
+    "7-eleven": { name: "7-Eleven", name_th: "7-Eleven", logo: `${STORE_LOGO_URL}/7eleven.jpg` },
+    "lotus": { name: "Lotus's", name_th: "Lotus's", logo: `${STORE_LOGO_URL}/lotus.jpg` },
+    "makro": { name: "Makro", name_th: "Makro", logo: `${STORE_LOGO_URL}/makro.jpg` },
+    "tops": { name: "Tops", name_th: "Tops", logo: `${STORE_LOGO_URL}/tops.jpg` },
+    "cj": { name: "CJ Express", name_th: "CJ Express", logo: `${STORE_LOGO_URL}/cj.jpg` },
+    "maxvalue": { name: "MaxValu", name_th: "MaxValu", logo: `${STORE_LOGO_URL}/maxvalue.jpg` },
+  };
+
+  // Count real branches per chain
+  const chainBranchCounts: Record<string, number> = {};
+  for (const b of branches) {
+    const chain = (b.branch as any).chain as string | undefined;
+    if (!chain) continue;
+    chainBranchCounts[chain] = (chainBranchCounts[chain] || 0) + 1;
+  }
+
+  const mockPrices = getStorePrices(productId);
+  const hasRealBranches = Object.keys(chainBranchCounts).length > 0;
+
+  // Case 1: Mock pricing exists — merge with real branch counts
+  if (mockPrices.length > 0 && hasRealBranches) {
+    return mockPrices
+      .map((sp) => ({
+        ...sp,
+        branch_count: chainBranchCounts[sp.store_id] || 0,
+        in_stock: (chainBranchCounts[sp.store_id] || 0) > 0,
+      }))
+      .filter((sp) => sp.in_stock);
+  }
+
+  // Case 2: No mock pricing (real backend product) — build from branch data
+  if (hasRealBranches) {
+    const result: StorePrice[] = [];
+    for (const chain of Object.keys(chainBranchCounts)) {
+      const meta = STORE_META[chain] || { name: chain, name_th: chain, logo: "" };
+      result.push({
+        store_id: chain,
+        store_name: meta.name,
+        store_name_th: meta.name_th,
+        price: productPrice,
+        in_stock: true,
+        branch_count: chainBranchCounts[chain],
+        logo_url: meta.logo,
+      });
+    }
+    return result;
+  }
+
+  // Case 3: No real branches — return mock data as-is
+  return mockPrices;
+}
 
 // Store online shopping URLs
 const STORE_ONLINE_URLS: Record<string, { name: string; getUrl: (query: string) => string }> = {
@@ -75,6 +134,10 @@ function SearchContent() {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [searchedImage, setSearchedImage] = useState<string | null>(null);
+  // null = use URL storeParam, "" = explicitly show all, "tops" = specific store
+  const [selectedStoreFilter, setSelectedStoreFilter] = useState<string | null>(null);
+  const [allBranches, setAllBranches] = useState<SearchResult | null>(null);
+  const [loadingBranches, setLoadingBranches] = useState(false);
 
   const handleImageSearch = async (imageFile: File) => {
     setLoading(true);
@@ -190,6 +253,34 @@ function SearchContent() {
     }
   }, [productParam, results]);
 
+  // Fetch ALL branches (no store filter) for the selected product so price comparison can filter by any store
+  useEffect(() => {
+    if (!selectedProduct) {
+      setAllBranches(null);
+      return;
+    }
+    const productName = selectedProduct.product.name_th;
+    // Fetch without store filter to get branches from all chains
+    setLoadingBranches(true);
+    searchProductsHybrid(productName, lat, lng, 50)
+      .catch(() => searchProducts(productName, lat, lng, 50))
+      .then((data) => {
+        const match = data.find(r => r.product.id === selectedProduct.product.id);
+        if (match) {
+          setAllBranches(match);
+        } else if (data.length > 0) {
+          setAllBranches(data[0]);
+        }
+      })
+      .catch(() => {
+        // Fallback to mock data
+        const mockResults = searchMockProducts(productName, lat, lng, 50);
+        const match = mockResults.find(r => r.product.id === selectedProduct.product.id);
+        if (match) setAllBranches(match);
+      })
+      .finally(() => setLoadingBranches(false));
+  }, [selectedProduct?.product.id]);
+
   const handleSearch = (newQuery: string) => {
     setSearchedImage(null);
     const storeQuery = storeParam ? `&store=${storeParam}` : "";
@@ -207,6 +298,7 @@ function SearchContent() {
 
   const handleProductClick = (result: SearchResult) => {
     setSelectedProduct(result);
+    setSelectedStoreFilter(null);
     // Add product ID to URL so it persists across navigation (e.g. login redirect)
     const params = new URLSearchParams(window.location.search);
     params.set("product", result.product.id);
@@ -316,84 +408,202 @@ function SearchContent() {
         ) : selectedProduct ? (
           // Product Detail with Branch List
           <div className="space-y-4 sm:space-y-5">
-            <div className="rounded-2xl bg-white p-4 border border-gray-100 sm:p-5">
-              <div className="flex gap-4">
-                <div className="relative h-16 w-16 flex-shrink-0 rounded-xl bg-gray-50 overflow-hidden sm:h-20 sm:w-20">
+            <div className="rounded-2xl bg-white border border-gray-100 p-5 sm:p-6">
+              <div className="flex gap-5 sm:gap-6">
+                {/* Product Image */}
+                <div className="relative flex-shrink-0 w-28 h-28 sm:w-40 sm:h-40 rounded-2xl bg-gray-50 overflow-hidden flex items-center justify-center p-3 sm:p-4">
                   {selectedProduct.product.image_url ? (
                     <img
                       src={selectedProduct.product.image_url}
                       alt={selectedProduct.product.name_th}
-                      className="h-full w-full object-cover"
+                      className="max-h-full max-w-full object-contain"
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                         e.currentTarget.nextElementSibling?.classList.remove('hidden');
                       }}
                     />
                   ) : null}
-                  <div className={`flex h-full w-full items-center justify-center absolute inset-0 ${selectedProduct.product.image_url ? 'hidden' : ''}`}>
-                    <Package className="h-7 w-7 text-gray-300 sm:h-8 sm:w-8" strokeWidth={1.5} />
+                  <div className={`flex items-center justify-center absolute inset-0 ${selectedProduct.product.image_url ? 'hidden' : ''}`}>
+                    <Package className="h-10 w-10 text-gray-300 sm:h-12 sm:w-12" strokeWidth={1} />
                   </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-base font-medium text-gray-900 sm:text-lg">{selectedProduct.product.name_th}</h2>
-                  <p className="text-sm text-gray-400 mt-0.5">{selectedProduct.product.name}</p>
-                  <p className="mt-2 text-lg font-semibold text-gray-900 sm:text-xl">฿{selectedProduct.product.price}</p>
+
+                {/* Product Info */}
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-semibold text-gray-900 sm:text-xl leading-snug">
+                    {selectedProduct.product.name_th}
+                  </h2>
+                  <p className="text-sm text-gray-400 mt-1">{selectedProduct.product.name}</p>
+
+                  {(() => {
+                    const sourceBranches = allBranches?.branches || selectedProduct.branches;
+                    const prices = getEffectiveStorePrices(selectedProduct.product.id, sourceBranches, selectedProduct.product.price);
+                    const inStockPrices = prices.filter(s => s.in_stock);
+                    const priceMin = inStockPrices.length > 0 ? Math.min(...inStockPrices.map(s => s.price)) : null;
+                    const priceMax = inStockPrices.length > 0 ? Math.max(...inStockPrices.map(s => s.price)) : null;
+                    const inStockCount = inStockPrices.length;
+                    const totalBranches = prices.reduce((sum, s) => sum + s.branch_count, 0);
+
+                    return (
+                      <>
+                        <p className="mt-4 text-2xl font-bold text-gray-900 sm:text-3xl">
+                          {priceMin && priceMax && priceMin !== priceMax
+                            ? `${formatPrice(priceMin)} - ${formatPrice(priceMax)}`
+                            : formatPrice(selectedProduct.product.price)
+                          }
+                        </p>
+                        {inStockCount > 0 && (
+                          <div className="mt-2 flex items-center gap-2 text-sm text-gray-400 flex-wrap">
+                            <span>ขายออฟไลน์ {inStockCount} ร้านค้า</span>
+                            <span className="text-gray-200">|</span>
+                            <span>สินค้า {totalBranches} สาขา</span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+
+                  {/* CTA Button */}
+                  <button
+                    onClick={() => {
+                      setSelectedStoreFilter("");
+                      setTimeout(() => {
+                        document.getElementById("store-prices")?.scrollIntoView({ behavior: "smooth" });
+                      }, 100);
+                    }}
+                    className="mt-5 inline-flex items-center gap-2 rounded-xl border border-gray-900 px-5 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-900 hover:text-white active:bg-gray-800 transition-colors"
+                  >
+                    <TrendingDown className="h-4 w-4" strokeWidth={2} />
+                    ดูราคาทุกร้านค้า
+                  </button>
                 </div>
               </div>
             </div>
-            {/* Online Shopping Option */}
-            {storeParam && STORE_ONLINE_URLS[storeParam] && (
-              <a
-                href={getOnlineStoreUrl(storeParam, selectedProduct.product.name_th) || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-4 rounded-2xl bg-white border border-gray-100 p-4 sm:p-5 transition-all hover:bg-gray-50 active:scale-[0.99]"
-              >
-                <div className="flex-shrink-0 bg-gray-900 rounded-xl p-3">
-                  <ShoppingCart className="h-6 w-6 text-white" strokeWidth={1.5} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 text-sm sm:text-base">สั่งซื้อออนไลน์</p>
-                  <p className="text-xs sm:text-sm text-gray-400 mt-0.5">{getOnlineStoreName(storeParam)}</p>
-                </div>
-                <ExternalLink className="h-5 w-5 text-gray-300 flex-shrink-0" strokeWidth={1.5} />
-              </a>
-            )}
 
-            {/* If no store selected, show general online option */}
-            {!storeParam && (
-              <a
-                href={`https://www.allonline.7eleven.co.th/search/?q=${encodeURIComponent(selectedProduct.product.name_th)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-4 rounded-2xl bg-white border border-gray-100 p-4 sm:p-5 transition-all hover:bg-gray-50 active:scale-[0.99]"
-              >
-                <div className="flex-shrink-0 bg-gray-900 rounded-xl p-3">
-                  <ShoppingCart className="h-6 w-6 text-white" strokeWidth={1.5} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 text-sm sm:text-base">สั่งซื้อออนไลน์</p>
-                  <p className="text-xs sm:text-sm text-gray-400 mt-0.5">ดูราคาและสั่งซื้อทางออนไลน์</p>
-                </div>
-                <ExternalLink className="h-5 w-5 text-gray-300 flex-shrink-0" strokeWidth={1.5} />
-              </a>
-            )}
+            {/* Price Comparison Section */}
+            {(() => {
+              // Use real branch data when available, fall back to mock data
+              const sourceBranches = allBranches?.branches || selectedProduct.branches;
+              const storePrices = getEffectiveStorePrices(selectedProduct.product.id, sourceBranches, selectedProduct.product.price);
+              if (storePrices.length > 1) {
+                return (
+                  <div id="store-prices">
+                  <PriceComparison
+                    product={selectedProduct.product}
+                    storePrices={storePrices}
+                    selectedStoreId={selectedStoreFilter !== null ? (selectedStoreFilter || undefined) : (storeParam || undefined)}
+                    onStoreClick={(storeId) => {
+                      // Toggle: if already selected, clear filter; otherwise set it
+                      setSelectedStoreFilter(prev => prev === storeId ? "" : storeId);
+                    }}
+                  />
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-gray-900 text-sm sm:text-base">
-                สาขาที่มีสินค้า
-              </h3>
-              <span className="text-sm text-gray-400">{selectedProduct.branches.length} สาขา</span>
-            </div>
-            <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
-              {selectedProduct.branches.map((b) => (
-                <BranchCard
-                  key={b.branch.id}
-                  branchWithStock={b}
-                  product={selectedProduct.product}
-                />
-              ))}
-            </div>
+            {/* TODO: Re-enable Online Shopping when connected to modern trade backend */}
+            {/* {(() => {
+              const activeStore = selectedStoreFilter !== null ? selectedStoreFilter : storeParam;
+              if (activeStore && STORE_ONLINE_URLS[activeStore]) {
+                return (
+                  <a
+                    href={getOnlineStoreUrl(activeStore, selectedProduct.product.name_th) || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 rounded-2xl bg-white border border-gray-100 p-4 sm:p-5 transition-all hover:bg-gray-50 active:scale-[0.99]"
+                  >
+                    <div className="flex-shrink-0 bg-gray-900 rounded-xl p-3">
+                      <ShoppingCart className="h-6 w-6 text-white" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 text-sm sm:text-base">สั่งซื้อออนไลน์</p>
+                      <p className="text-xs sm:text-sm text-gray-400 mt-0.5">{getOnlineStoreName(activeStore)}</p>
+                    </div>
+                    <ExternalLink className="h-5 w-5 text-gray-300 flex-shrink-0" strokeWidth={1.5} />
+                  </a>
+                );
+              }
+              if (!activeStore) {
+                return (
+                  <a
+                    href={`https://www.allonline.7eleven.co.th/search/?q=${encodeURIComponent(selectedProduct.product.name_th)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 rounded-2xl bg-white border border-gray-100 p-4 sm:p-5 transition-all hover:bg-gray-50 active:scale-[0.99]"
+                  >
+                    <div className="flex-shrink-0 bg-gray-900 rounded-xl p-3">
+                      <ShoppingCart className="h-6 w-6 text-white" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 text-sm sm:text-base">สั่งซื้อออนไลน์</p>
+                      <p className="text-xs sm:text-sm text-gray-400 mt-0.5">ดูราคาและสั่งซื้อทางออนไลน์</p>
+                    </div>
+                    <ExternalLink className="h-5 w-5 text-gray-300 flex-shrink-0" strokeWidth={1.5} />
+                  </a>
+                );
+              }
+              return null;
+            })()} */}
+
+            {/* Branch List - filtered by selected store */}
+            {(() => {
+              const activeStore = selectedStoreFilter !== null ? selectedStoreFilter : storeParam;
+              // Use allBranches (fetched without store filter) so we have data for all chains
+              const sourceBranches = allBranches?.branches || selectedProduct.branches;
+              const filteredBranches = activeStore
+                ? sourceBranches.filter(b => (b.branch as any).chain === activeStore)
+                : sourceBranches;
+              const storeName = activeStore ? getStoreName(activeStore) : null;
+
+              return (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium text-gray-900 text-sm sm:text-base">
+                      {storeName ? `สาขา ${storeName} ที่มีสินค้า` : "สาขาที่มีสินค้า"}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      {activeStore && (
+                        <button
+                          onClick={() => setSelectedStoreFilter("")}
+                          className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                          ดูทั้งหมด
+                        </button>
+                      )}
+                      <span className="text-sm text-gray-400">{filteredBranches.length} สาขา</span>
+                    </div>
+                  </div>
+                  {loadingBranches ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-gray-400" strokeWidth={1.5} />
+                    </div>
+                  ) : filteredBranches.length > 0 ? (
+                    <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
+                      {filteredBranches.map((b) => (
+                        <BranchCard
+                          key={b.branch.id}
+                          branchWithStock={b}
+                          product={selectedProduct.product}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl bg-white border border-gray-100 p-6 text-center">
+                      <Store className="h-8 w-8 text-gray-200 mx-auto mb-2" strokeWidth={1.5} />
+                      <p className="text-sm text-gray-400">ไม่พบสาขา {storeName} ที่มีสินค้าใกล้คุณ</p>
+                      <button
+                        onClick={() => setSelectedStoreFilter("")}
+                        className="mt-3 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                      >
+                        ดูสาขาทุกร้านค้า
+                      </button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         ) : results.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center sm:py-20">

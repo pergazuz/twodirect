@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+// import { useState } from "react";
+// import { useRouter } from "next/navigation";
 import { BranchWithStock, Product } from "@/types";
 import { formatDistance } from "@/lib/utils";
-import { MapPin, Clock, Navigation, ShoppingBag } from "lucide-react";
+import { MapPin, Clock, Navigation, Phone } from "lucide-react";
 import { PromoBadge } from "./PromoBadge";
-import { ReservationModal } from "./ReservationModal";
-import { useAuth } from "@/contexts/AuthContext";
+// import { ReservationModal } from "./ReservationModal";
+// import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "@/contexts/LocationContext";
 
 interface BranchCardProps {
@@ -18,10 +18,10 @@ interface BranchCardProps {
 }
 
 export function BranchCard({ branchWithStock, product, onNavigate, onReserve }: BranchCardProps) {
-  const { branch, quantity, distance_km, promotions } = branchWithStock;
-  const [showReservationModal, setShowReservationModal] = useState(false);
-  const { user } = useAuth();
-  const router = useRouter();
+  const { branch, distance_km, promotions } = branchWithStock;
+  // const [showReservationModal, setShowReservationModal] = useState(false);
+  // const { user } = useAuth();
+  // const router = useRouter();
   const { activeLocation } = useLocation();
 
   const handleNavigate = () => {
@@ -30,16 +30,22 @@ export function BranchCard({ branchWithStock, product, onNavigate, onReserve }: 
     onNavigate?.(branchWithStock);
   };
 
-  const handleReserve = () => {
-    if (!user) {
-      // Redirect to login, then back to current page
-      const currentPath = window.location.pathname + window.location.search;
-      router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
-      return;
+  const handleCall = () => {
+    if (branch.phone) {
+      window.open(`tel:${branch.phone}`, "_self");
     }
-    setShowReservationModal(true);
-    onReserve?.(branchWithStock);
   };
+
+  // TODO: Re-enable when connected to modern trade backend
+  // const handleReserve = () => {
+  //   if (!user) {
+  //     const currentPath = window.location.pathname + window.location.search;
+  //     router.push(`/login?redirect=${encodeURIComponent(currentPath)}`);
+  //     return;
+  //   }
+  //   setShowReservationModal(true);
+  //   onReserve?.(branchWithStock);
+  // };
 
   return (
     <>
@@ -62,9 +68,8 @@ export function BranchCard({ branchWithStock, product, onNavigate, onReserve }: 
             <p className="text-lg font-semibold text-green-600 sm:text-xl">
               {formatDistance(distance_km)}
             </p>
-            <span className="text-[10px] text-gray-400 sm:text-xs">
-              {quantity} ชิ้น
-            </span>
+            {/* TODO: Re-enable quantity when connected to modern trade backend */}
+            {/* <span className="text-[10px] text-gray-400 sm:text-xs">{quantity} ชิ้น</span> */}
           </div>
         </div>
 
@@ -85,18 +90,28 @@ export function BranchCard({ branchWithStock, product, onNavigate, onReserve }: 
             <Navigation className="h-4 w-4 sm:h-5 sm:w-5" />
             นำทาง
           </button>
-          <button
+          {/* TODO: Re-enable จองของ when connected to modern trade backend */}
+          {/* <button
             onClick={handleReserve}
             className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gray-900 py-3 font-medium text-white transition-colors hover:bg-gray-800 active:bg-gray-700 min-h-[48px] text-sm sm:text-base"
           >
             <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
             จองของ
-          </button>
+          </button> */}
+          {branch.phone && (
+            <button
+              onClick={handleCall}
+              className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gray-900 py-3 font-medium text-white transition-colors hover:bg-gray-800 active:bg-gray-700 min-h-[48px] text-sm sm:text-base"
+            >
+              <Phone className="h-4 w-4 sm:h-5 sm:w-5" />
+              โทร
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Reservation Modal */}
-      {product && (
+      {/* TODO: Re-enable ReservationModal when connected to modern trade backend */}
+      {/* {product && (
         <ReservationModal
           isOpen={showReservationModal}
           onClose={() => setShowReservationModal(false)}
@@ -105,7 +120,7 @@ export function BranchCard({ branchWithStock, product, onNavigate, onReserve }: 
           quantity={quantity}
           pickupHours={2}
         />
-      )}
+      )} */}
     </>
   );
 }
