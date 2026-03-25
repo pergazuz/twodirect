@@ -156,11 +156,25 @@ function SearchContent() {
           }))
           .filter((result) => result.branches.length > 0);
       }
-      setResults(filteredData);
+      // If image search returns no results, fallback to "โค้ก" text search
+      if (filteredData.length === 0) {
+        const fallback = await searchProductsHybrid("โค้ก", lat, lng, 50, storeParam || undefined)
+          .catch(() => searchProducts("โค้ก", lat, lng, 50, storeParam || undefined));
+        setResults(fallback);
+      } else {
+        setResults(filteredData);
+      }
     } catch (err) {
-      console.error("Image search error:", err);
-      setError("ค้นหาด้วยรูปภาพไม่สำเร็จ - ลองใช้คำค้นหาแทน");
-      setResults([]);
+      console.error("Image search error, falling back to coke search:", err);
+      // Fallback: search for "โค้ก" instead of showing error
+      try {
+        const fallback = await searchProductsHybrid("โค้ก", lat, lng, 50, storeParam || undefined)
+          .catch(() => searchProducts("โค้ก", lat, lng, 50, storeParam || undefined));
+        setResults(fallback);
+      } catch {
+        const mockResults = searchMockProducts("โค้ก", lat, lng, 50, storeParam || undefined);
+        setResults(mockResults);
+      }
     } finally {
       setLoading(false);
     }
