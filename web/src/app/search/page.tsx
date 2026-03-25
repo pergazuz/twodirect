@@ -573,13 +573,47 @@ function SearchContent() {
                         </button>
                       )}
                       <span className="text-sm text-gray-400">{filteredBranches.length} สาขา</span>
+                      <div className="flex gap-1 rounded-xl bg-gray-100 p-1 ml-2">
+                        <button
+                          onClick={() => setViewMode("list")}
+                          className={`rounded-lg p-2 min-h-[36px] min-w-[36px] flex items-center justify-center transition-all ${
+                            viewMode === "list"
+                              ? "bg-white shadow-sm text-gray-900"
+                              : "text-gray-400 hover:text-gray-600"
+                          }`}
+                          aria-label="List view"
+                        >
+                          <List className="h-3.5 w-3.5" strokeWidth={viewMode === "list" ? 2 : 1.5} />
+                        </button>
+                        <button
+                          onClick={() => setViewMode("map")}
+                          className={`rounded-lg p-2 min-h-[36px] min-w-[36px] flex items-center justify-center transition-all ${
+                            viewMode === "map"
+                              ? "bg-white shadow-sm text-gray-900"
+                              : "text-gray-400 hover:text-gray-600"
+                          }`}
+                          aria-label="Map view"
+                        >
+                          <Map className="h-3.5 w-3.5" strokeWidth={viewMode === "map" ? 2 : 1.5} />
+                        </button>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Map View for product detail */}
+                  {viewMode === "map" && filteredBranches.length > 0 && (
+                    <MapView
+                      branches={filteredBranches}
+                      userLocation={{ lat, lng }}
+                      className="h-[350px] sm:h-[400px]"
+                    />
+                  )}
+
                   {loadingBranches ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-gray-400" strokeWidth={1.5} />
                     </div>
-                  ) : filteredBranches.length > 0 ? (
+                  ) : viewMode === "map" ? null : filteredBranches.length > 0 ? (
                     <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
                       {filteredBranches.map((b) => (
                         <BranchCard
