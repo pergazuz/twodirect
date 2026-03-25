@@ -76,18 +76,23 @@ export default function Home() {
               ) : user ? (
                 <Link
                   href="/profile"
-                  className="flex items-center justify-center rounded-full bg-white/10 overflow-hidden transition-colors hover:bg-white/20 active:bg-white/15 min-h-[40px] min-w-[40px]"
+                  className="relative flex items-center justify-center rounded-full bg-white/10 overflow-hidden transition-colors hover:bg-white/20 active:bg-white/15 h-10 w-10 flex-shrink-0"
                   title="โปรไฟล์"
                 >
                   {profile?.avatar_url ? (
                     <img
                       src={profile.avatar_url}
                       alt={profile.full_name || "Profile"}
-                      className="h-10 w-10 rounded-full object-cover"
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                      }}
                     />
-                  ) : (
+                  ) : null}
+                  <div className={`absolute inset-0 flex items-center justify-center ${profile?.avatar_url ? "hidden" : ""}`}>
                     <User className="h-5 w-5 text-white" strokeWidth={1.5} />
-                  )}
+                  </div>
                 </Link>
               ) : (
                 <Link
@@ -99,8 +104,8 @@ export default function Home() {
                   <span className="hidden sm:inline">เข้าสู่ระบบ</span>
                 </Link>
               )}
-              {/* Reservations Link */}
-              <Link
+              {/* TODO: Re-enable reservations link when reservation system is ready */}
+              {/* <Link
                 href="/reservations"
                 className="relative flex items-center justify-center rounded-full bg-white/10 p-2.5 text-white transition-colors hover:bg-white/20 active:bg-white/15 min-h-[40px] min-w-[40px]"
                 title="รายการจองของฉัน"
@@ -111,7 +116,7 @@ export default function Home() {
                     {pendingCount > 9 ? "9+" : pendingCount}
                   </span>
                 )}
-              </Link>
+              </Link> */}
               {/* Location Button */}
               <button
                 onClick={handleLocationClick}
@@ -147,10 +152,10 @@ export default function Home() {
         <BannerCarousel />
       </section>
 
-      {/* Pending Reservation Banner */}
-      <section className="mx-auto mt-6 max-w-lg px-4 sm:mt-8 md:max-w-2xl lg:max-w-4xl">
+      {/* TODO: Re-enable when reservation system is ready */}
+      {/* <section className="mx-auto mt-6 max-w-lg px-4 sm:mt-8 md:max-w-2xl lg:max-w-4xl">
         <PendingReservationBanner />
-      </section>
+      </section> */}
 
       {/* Store Selector */}
       <section className="mx-auto mt-6 max-w-lg sm:mt-8 md:max-w-2xl lg:max-w-4xl">
@@ -160,13 +165,12 @@ export default function Home() {
         <StoreSelector onStoreClick={handleStoreClick} className="px-0" />
       </section>
 
-      {/* Promotions */}
-      <section className="mx-auto mt-6 max-w-lg px-4 sm:mt-8 md:max-w-2xl lg:max-w-4xl">
+      {/* TODO: Re-enable promotions section when coupon/promo system is ready */}
+      {/* <section className="mx-auto mt-6 max-w-lg px-4 sm:mt-8 md:max-w-2xl lg:max-w-4xl">
         <h2 className="mb-3 text-sm font-medium text-gray-500 uppercase tracking-wide sm:mb-4">
           โปรโมชั่น
         </h2>
         <div className="space-y-3">
-          {/* Coupon Card */}
           <Link
             href="/coupons"
             className="w-full rounded-2xl bg-white border border-gray-100 p-4 sm:p-5 text-left transition-all hover:bg-gray-50 active:scale-[0.99] flex items-center justify-between"
@@ -187,7 +191,6 @@ export default function Home() {
             </div>
           </Link>
 
-          {/* Main Promo Card */}
           <button
             onClick={() => handleSearch("โปรโมชั่น")}
             className="w-full rounded-2xl bg-white border border-gray-100 p-4 sm:p-5 text-left transition-all hover:bg-gray-50 active:scale-[0.99]"
@@ -210,7 +213,6 @@ export default function Home() {
             </div>
           </button>
 
-          {/* Secondary Promos */}
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => handleSearch("ซื้อ 1 แถม 1")}
@@ -230,7 +232,7 @@ export default function Home() {
             </button>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Popular Searches */}
       <section className="mx-auto mt-6 max-w-lg px-4 pb-8 sm:mt-8 sm:pb-10 md:max-w-2xl lg:max-w-4xl">

@@ -92,12 +92,14 @@ export function Header() {
               <Link href="/search" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
                 ค้นหาสินค้า
               </Link>
-              <Link href="/coupons" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
+              {/* TODO: Re-enable when coupon system is ready */}
+              {/* <Link href="/coupons" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
                 คูปอง
-              </Link>
-              <Link href="/reservations" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
+              </Link> */}
+              {/* TODO: Re-enable when reservation system is ready */}
+              {/* <Link href="/reservations" className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors">
                 รายการจอง
-              </Link>
+              </Link> */}
             </nav>
 
             {/* Right Actions */}
@@ -111,8 +113,8 @@ export function Header() {
                 <Search className="h-5 w-5 text-gray-600" />
               </Link>
 
-              {/* Coupons */}
-              <Link
+              {/* TODO: Re-enable coupon icon when coupon system is ready */}
+              {/* <Link
                 href="/coupons"
                 className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
                 title="คูปอง"
@@ -123,10 +125,10 @@ export function Header() {
                     {availableCoupons.length > 9 ? "9+" : availableCoupons.length}
                   </span>
                 )}
-              </Link>
+              </Link> */}
 
-              {/* Reservations */}
-              <Link
+              {/* TODO: Re-enable reservations icon when reservation system is ready */}
+              {/* <Link
                 href="/reservations"
                 className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
                 title="รายการจอง"
@@ -137,7 +139,7 @@ export function Header() {
                     {pendingCount > 9 ? "9+" : pendingCount}
                   </span>
                 )}
-              </Link>
+              </Link> */}
 
               {/* Auth */}
               {authLoading ? (

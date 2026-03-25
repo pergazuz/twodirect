@@ -73,13 +73,14 @@ export function BranchCard({ branchWithStock, product, onNavigate, onReserve }: 
           </div>
         </div>
 
-        {promotions.length > 0 && (
+        {/* TODO: Re-enable promotions when promo system is ready */}
+        {/* {promotions.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-1.5 sm:gap-2">
             {promotions.slice(0, 2).map((promo) => (
               <PromoBadge key={promo.id} promotion={promo} />
             ))}
           </div>
-        )}
+        )} */}
 
         {/* Action Buttons */}
         <div className="mt-4 flex gap-2">

@@ -94,7 +94,8 @@ export function ProductCard({ result, onClick }: ProductCardProps) {
             </div>
           )}
 
-          {hasExclusivePromo && (
+          {/* TODO: Re-enable when promo system is ready */}
+          {/* {hasExclusivePromo && (
             <div className="mt-2">
               <PromoBadge
                 promotion={{
@@ -105,7 +106,7 @@ export function ProductCard({ result, onClick }: ProductCardProps) {
                 }}
               />
             </div>
-          )}
+          )} */}
         </div>
 
         <ChevronRight className="h-5 w-5 flex-shrink-0 self-center text-gray-300" />

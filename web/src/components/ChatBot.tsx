@@ -36,7 +36,7 @@ interface ChatProduct {
   image_url?: string;
   total_stock: number;
   branch_count: number;
-  promotions: string[];
+  promotions?: string[];
 }
 
 interface ChatMessage {
@@ -141,14 +141,15 @@ function ChatProductCard({ product, onNavigate }: { product: ChatProduct; onNavi
             <span className="text-gray-300">|</span>
             <span>{product.total_stock} ชิ้น</span>
           </div>
-          {product.promotions.length > 0 && (
+          {/* TODO: Re-enable when promo system is ready */}
+          {/* {product.promotions.length > 0 && (
             <div className="mt-1.5">
               <span className="inline-flex items-center gap-1 text-[10px] font-medium text-orange-600 bg-orange-50 rounded-full px-2 py-0.5">
                 <Sparkles className="h-2.5 w-2.5" />
                 {product.promotions[0]}
               </span>
             </div>
-          )}
+          )} */}
         </div>
         <ChevronRight className="h-4 w-4 flex-shrink-0 self-center text-gray-300 group-hover:text-gray-400 transition-colors" />
       </div>
